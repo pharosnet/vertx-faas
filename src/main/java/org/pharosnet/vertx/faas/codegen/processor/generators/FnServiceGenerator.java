@@ -15,9 +15,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.List;
 
 public class FnServiceGenerator {
@@ -99,6 +97,7 @@ public class FnServiceGenerator {
         // file
         JavaFile javaFile = JavaFile.builder(pkg, typeBuilder)
                 .addFileComment("Generated code from Vertx FaaS. Do not modify!")
+                .indent("\t")
                 .build();
 
         // write
@@ -179,12 +178,12 @@ public class FnServiceGenerator {
 
         // valid auth
         if (fnUnit.getFn().authentication()) {
-            executeMethod.addStatement("// valid auth");
-            executeMethod.addStatement("if (context.getUser() == null) {");
-            executeMethod.addStatement("handler.handle($T.fail());", ClassName.get("org.pharosnet.vertx.faas.exception", "UnauthorizedException"));
-            executeMethod.addStatement("return;");
-            executeMethod.addStatement("}");
-            executeMethod.addStatement("");
+            executeMethod.addCode("// valid auth \n");
+            executeMethod.addCode("if (context.getUser() == null) { \n");
+            executeMethod.addCode("\thandler.handle($T.fail()); \n", ClassName.get("org.pharosnet.vertx.faas.exception", "UnauthorizedException"));
+            executeMethod.addCode("\treturn;\n");
+            executeMethod.addCode("} \n");
+            executeMethod.addCode("\n");
         }
 
         // valid parameters
@@ -245,6 +244,7 @@ public class FnServiceGenerator {
         // file
         JavaFile javaFile = JavaFile.builder(pkg, typeBuilder)
                 .addFileComment("Generated code from Vertx FaaS. Do not modify!")
+                .indent("\t")
                 .build();
 
         // write
