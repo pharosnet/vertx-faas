@@ -1,18 +1,24 @@
 package org.pharosnet.vertx.faas.codegen.processor.generators;
 
 import com.squareup.javapoet.*;
+import io.vertx.codegen.annotations.ProxyGen;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import org.pharosnet.vertx.faas.exception.SystemException;
 import org.pharosnet.vertx.faas.validator.Validators;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.List;
 
 public class FnServiceGenerator {
 
@@ -31,6 +37,7 @@ public class FnServiceGenerator {
         String pkg = fnUnit.getPackageName();
         String fnClassName = fnUnit.getClassName();
         String serviceClassName = String.format("%sService", fnClassName);
+        String serviceImplClassName = String.format("%sServiceImpl", fnClassName);
 
         // ADDRESS
         String address = String.format("%s-%s", fnUnit.getFn().module(), fnUnit.getFn().id());
@@ -38,7 +45,7 @@ public class FnServiceGenerator {
                 ClassName.get("java.lang", "String"), "SERVICE_ADDRESS",
                 Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer("$S", address);
 
-        ;
+
         // register
         MethodSpec.Builder registerMethod = MethodSpec.methodBuilder("register")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -46,9 +53,8 @@ public class FnServiceGenerator {
                 .returns(ParameterizedTypeName.get(
                         ClassName.get("io.vertx.core.eventbus", "MessageConsumer"),
                         ClassName.get("io.vertx.core.json", "JsonObject")))
-                .addStatement(String.format("return new $T(vertx).setAddress(SERVICE_ADDRESS).register(%s.class, new $T(vertx));", serviceClassName),
-                        ClassName.get("io.vertx.serviceproxy", "ServiceBinder"),
-                        ClassName.get(fnUnit.getFn().implement()));
+                .addStatement(String.format("return new $T(vertx).setAddress(SERVICE_ADDRESS).register(%s.class, new %s(vertx))", serviceClassName, serviceImplClassName),
+                        ClassName.get("io.vertx.serviceproxy", "ServiceBinder"));
 
 
         // proxy
@@ -56,18 +62,17 @@ public class FnServiceGenerator {
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .addParameter(ClassName.get("io.vertx.core", "Vertx"), "vertx")
                 .returns(ClassName.get(pkg, serviceClassName))
-                .addStatement("return new $T(vertx, SERVICE_ADDRESS);",
-                        ClassName.get(pkg, "UserGetFnServiceVertxEBProxy"),
-                        ClassName.get(fnUnit.getFn().implement()));
+                .addStatement("return new $T(vertx, SERVICE_ADDRESS)",
+                        ClassName.get(pkg, String.format("%sServiceVertxEBProxy", fnUnit.getClassName())));
 
         // execute
         MethodSpec.Builder executeMethod = MethodSpec.methodBuilder("execute")
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                 .returns(TypeName.VOID);
 
-        for (Parameter parameter : fnUnit.getParameters()) {
+        for (VariableElement parameter : fnUnit.getParameters()) {
             executeMethod.addParameter(
-                    ClassName.get(parameter.getType()), parameter.getName()
+                    ClassName.get(parameter.asType()), parameter.getSimpleName().toString()
             );
         }
         executeMethod.addParameter(
@@ -75,13 +80,15 @@ public class FnServiceGenerator {
                         ClassName.get("io.vertx.core", "Handler"),
                         ParameterizedTypeName.get(
                                 ClassName.get("io.vertx.core", "AsyncResult"),
-                                ClassName.get(fnUnit.getReturnElementClass())
+                                fnUnit.getReturnElementClass()
                         )),
                 "handler"
         );
 
         // interface
         TypeSpec typeBuilder = TypeSpec.interfaceBuilder(serviceClassName)
+                .addAnnotation(VertxGen.class)
+                .addAnnotation(ProxyGen.class)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(staticAddressField.build())
                 .addMethod(registerMethod.build())
@@ -109,15 +116,15 @@ public class FnServiceGenerator {
         // logger
         FieldSpec.Builder staticLogField = FieldSpec.builder(
                 ClassName.get("org.slf4j", "Logger"), "log",
-                Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).initializer("$T.getLogger($S.class)",
+                Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).initializer("$T.getLogger($T.class)",
                 ClassName.get("org.slf4j", "LoggerFactory"),
-                serviceImplClassName);
+                ClassName.get(pkg, serviceImplClassName));
 
         // construct
         MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Vertx.class, "vertx")
-                .addStatement("this.fn = new $T(vertx);", ClassName.get(fnUnit.getFn().implement()));
+                .addStatement("this.fn = new $T(vertx)", ClassName.bestGuess(fnUnit.getFn().implementClassFullName()));
 
 
         // fn
@@ -134,22 +141,23 @@ public class FnServiceGenerator {
                 .returns(TypeName.VOID);
 
         boolean parametersNeedValid = false;
-        for (Parameter parameter : fnUnit.getParameters()) {
+        for (VariableElement parameter : fnUnit.getParameters()) {
             executeMethod.addParameter(
-                    ClassName.get(parameter.getType()), parameter.getName()
+                    ClassName.get(parameter.asType()), parameter.getSimpleName().toString()
             );
 
-            paramsNameBuffer.append(", ").append(parameter.getName());
+            paramsNameBuffer.append(", ").append(parameter.getSimpleName().toString());
 
             if (parametersNeedValid) {
                 continue;
             }
-            Annotation[] annotations = parameter.getAnnotations();
-            if (annotations == null || annotations.length == 0) {
+
+            List<? extends AnnotationMirror> annotationMirrors = parameter.getAnnotationMirrors();
+            if (annotationMirrors == null || annotationMirrors.size() == 0) {
                 continue;
             }
-            for (Annotation annotation : annotations) {
-                String annotationPkg = annotation.annotationType().getPackageName();
+            for (AnnotationMirror annotation : annotationMirrors) {
+                String annotationPkg = annotation.getAnnotationType().toString();
                 parametersNeedValid = annotationPkg.startsWith("jakarta.validation");
                 if (parametersNeedValid) {
                     break;
@@ -164,7 +172,7 @@ public class FnServiceGenerator {
                         ClassName.get("io.vertx.core", "Handler"),
                         ParameterizedTypeName.get(
                                 ClassName.get("io.vertx.core", "AsyncResult"),
-                                ClassName.get(fnUnit.getReturnElementClass())
+                                fnUnit.getReturnElementClass()
                         )),
                 "handler"
         );
@@ -173,7 +181,7 @@ public class FnServiceGenerator {
         if (fnUnit.getFn().authentication()) {
             executeMethod.addStatement("// valid auth");
             executeMethod.addStatement("if (context.getUser() == null) {");
-            executeMethod.addStatement("handler.handle(UnauthorizedException.fail());");
+            executeMethod.addStatement("handler.handle($T.fail());", ClassName.get("org.pharosnet.vertx.faas.exception", "UnauthorizedException"));
             executeMethod.addStatement("return;");
             executeMethod.addStatement("}");
             executeMethod.addStatement("");
@@ -182,38 +190,47 @@ public class FnServiceGenerator {
         // valid parameters
         if (parametersNeedValid) {
             StringBuilder paramsClassBuffer = new StringBuilder();
-            for (Parameter parameter : fnUnit.getParameters()) {
-                paramsClassBuffer.append(", ").append(parameter.getType().getSimpleName()).append(".class");
+            for (VariableElement parameter : fnUnit.getParameters()) {
+                String parameterClassFullName = ClassName.get(parameter.asType()).toString();
+                String parameterClassSimpleName = parameterClassFullName.substring(parameterClassFullName.lastIndexOf(".") + 1);
+                paramsClassBuffer.append(", ").append(parameterClassSimpleName).append(".class");
             }
-            executeMethod.addStatement("// valid parameters");
-            executeMethod.addStatement("try {");
-            //  Method method = UserGetFnImpl.class.getMethod("execute", Context.class, String.class);
-            executeMethod.addStatement("$T method = $S.class.getMethod(\"execute\" " + paramsClassBuffer.toString() + ");",
+            executeMethod.addCode("// valid parameters \n");
+            String paramsValidCode = "try { \n" +
+                    "\t$T method = $T.class.getMethod(\"execute\" " + paramsClassBuffer.toString() + "); \n" +
+                    "\tObject[] parameterValues = new Object[]{" + paramsNames + "}; \n" +
+                    "\tboolean valid = $T.validateExecutables(method, fn, parameterValues, handler); \n" +
+                    "\tif (!valid) { \n" +
+                    "\t\treturn; \n" +
+                    "\t} \n" +
+                    "} catch (Exception e) { \n" +
+                    "\tlog.error(\"参数校验失败！\", e); \n" +
+                    "\thandler.handle($T.fail(e)); \n" +
+                    "\treturn; \n" +
+                    "} \n\n";
+            executeMethod.addCode(paramsValidCode,
                     ClassName.get(Method.class),
-                    ClassName.get(fnUnit.getFn().implement()));
-            executeMethod.addStatement("Object[] parameterValues = new Object[]{" + paramsNames + "};");
-            executeMethod.addStatement("boolean valid = $T.validateExecutables(method, fn, parameterValues, handler);",
-                    ClassName.get(Validators.class));
-            executeMethod.addStatement(" if (!valid) {");
-            executeMethod.addStatement("return;");
-            executeMethod.addStatement("}");
-            executeMethod.addStatement("catch (Exception e) {");
-            executeMethod.addStatement("log.error(\"参数校验失败！\", e);");
-            executeMethod.addStatement(" handler.handle(SystemException.fail(e));");
-            executeMethod.addStatement("return;");
-            executeMethod.addStatement("}");
-            executeMethod.addStatement("");
+                    ClassName.bestGuess(fnUnit.getFn().implementClassFullName()),
+                    ClassName.get(Validators.class),
+                    ClassName.get("org.pharosnet.vertx.faas.exception", "SystemException")
+            );
 
         }
 
         // execute
-        executeMethod.addStatement("this.fn.execute(" + paramsNames + ")");
-        executeMethod.addStatement(".onSuccess(r -> handler.handle(Future.succeededFuture(r)))");
-        executeMethod.addStatement(".onFailure(e -> {");
-        executeMethod.addStatement(" log.error(\"{} 执行错误！\", $T.class.toString(), e);", ClassName.get(pkg, fnClassName));
-        executeMethod.addStatement(" handler.handle($T.fail(e));", ClassName.get(SystemException.class));
-        executeMethod.addStatement("});");
-        executeMethod.addStatement("");
+        String executeCode = "this.fn.execute(" + paramsNames + ") \n" +
+                "\t\t.onSuccess(r -> handler.handle($T.succeededFuture(r))) \n" +
+                "\t\t.onFailure(e -> { \n" +
+                "\t\t\tlog.error(\"{} 执行错误！\", $T.class.toString(), e); \n" +
+                "\t\t\thandler.handle($T.fail(e)); \n" +
+                "\t\t});\n\n";
+
+        executeMethod.addCode("// executeCode \n");
+        executeMethod.addCode(executeCode,
+                ClassName.get(Future.class),
+                ClassName.get(pkg, fnClassName),
+                ClassName.get(SystemException.class));
+
 
         // class
         TypeSpec typeBuilder = TypeSpec.classBuilder(serviceImplClassName)

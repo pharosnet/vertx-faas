@@ -130,7 +130,6 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
-            <scope>provided</scope>
             <classifier>processor</classifier>
         </dependency>
         <!--   <<< vertx  -->
@@ -149,14 +148,6 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
         <!--   <<< netty  -->
-
-        <!--   cache-api >>> -->
-        <dependency>
-            <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <!--   <<< cache-api -->
 
         <!--   auto-service >>> -->
         <dependency>

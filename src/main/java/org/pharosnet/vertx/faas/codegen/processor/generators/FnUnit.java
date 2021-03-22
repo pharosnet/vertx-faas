@@ -1,8 +1,10 @@
 package org.pharosnet.vertx.faas.codegen.processor.generators;
 
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import org.pharosnet.vertx.faas.codegen.annotation.Fn;
 
+import javax.lang.model.element.VariableElement;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +22,9 @@ public class FnUnit {
     private String packageName;
 
     private ParameterizedTypeName returnClass;
-    private Class<?> returnElementClass;
+    private TypeName returnElementClass;
 
-    private List<Parameter> parameters;
+    private List<VariableElement> parameters;
 
     public Fn getFn() {
         return fn;
@@ -56,19 +58,19 @@ public class FnUnit {
         this.returnClass = returnClass;
     }
 
-    public Class<?> getReturnElementClass() {
+    public TypeName getReturnElementClass() {
         return returnElementClass;
     }
 
-    public void setReturnElementClass(Class<?> returnElementClass) {
+    public void setReturnElementClass(TypeName returnElementClass) {
         this.returnElementClass = returnElementClass;
     }
 
-    public List<Parameter> getParameters() {
+    public List<VariableElement> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<Parameter> parameters) {
+    public void setParameters(List<VariableElement> parameters) {
         this.parameters = parameters;
     }
 }

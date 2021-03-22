@@ -1,20 +1,18 @@
 package org.pharosnet.vertx.faas.codegen.processor.generators;
 
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import org.pharosnet.vertx.faas.codegen.annotation.Fn;
-import org.pharosnet.vertx.faas.context.Context;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.Set;
 
 public class FnGenerator {
 
@@ -36,7 +34,7 @@ public class FnGenerator {
         this.fnUnit.setFn(typeElement.getAnnotation(Fn.class));
         this.fnUnit.setClassName(name);
         this.fnUnit.setPackageName(pkg);
-        this.scanFnClass(pkg, name);
+        this.scanFnClass(typeElement);
         this.messager.printMessage(Diagnostic.Kind.NOTE, String.format("加载到 %s.%s", pkg, name));
     }
 
@@ -50,40 +48,56 @@ public class FnGenerator {
         return this.fnUnit;
     }
 
-    private void scanFnClass(String pkg, String name) throws Exception {
-        Class<?> fnClass = Class.forName(String.format("%s.%s", pkg, name));
-        Method[] methods = fnClass.getMethods();
-        if (methods.length != 1) {
-            throw new Exception(String.format("%s.%s 类只能只有一个函数。", pkg, name));
-        }
-
-        Method method = methods[0];
-
-        Class<?> returnClass = method.getReturnType();
-        if (!(returnClass.getPackageName().equals("io.vertx.core") && returnClass.getSimpleName().equals("Future"))) {
-            throw new Exception(String.format("%s.%s 函数的返回值不是io.vertx.core.Future。", pkg, name));
-        }
-
-        ParameterizedType returnParameterizedType = (ParameterizedType) returnClass.getGenericSuperclass();
-        Class<?> returnElementClass = (Class<?>) returnParameterizedType.getActualTypeArguments()[0];
-        this.fnUnit.setReturnElementClass(returnElementClass);
-        this.fnUnit.setReturnClass(ParameterizedTypeName.get(
-                ClassName.get(returnClass),
-                ClassName.get(returnElementClass)));
-
-        Parameter[] parameters = method.getParameters();
-        if (parameters.length == 0) {
-            throw new Exception(String.format("%s.%s 函数的参数为空。", pkg, name));
-        }
-
-        for (int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
-            if (i == 0) {
-                if (parameter.getType() != Context.class) {
-                    throw new Exception(String.format("%s.%s 函数的第一个参数不是org.pharosnet.vertx.faas.context.Context。", pkg, name));
-                }
-                this.fnUnit.getParameters().add(parameter);
+    private void scanFnClass(TypeElement typeElement) throws Exception {
+        ExecutableElement methodElement = null;
+        List<? extends Element> elements = typeElement.getEnclosedElements();
+        for (Element element : elements) {
+            if (!(element instanceof ExecutableElement)) {
+                continue;
             }
+            if (methodElement != null) {
+                throw new Exception(String.format("%s.%s 类只能只有一个函数。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+            }
+
+            Set<Modifier> modifiers = element.getModifiers();
+            if (modifiers.contains(Modifier.STATIC)) {
+                continue;
+            }
+
+            methodElement = (ExecutableElement) element;
+        }
+
+        if (methodElement == null) {
+            throw new Exception(String.format("%s.%s 类只能只有一个函数。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+        }
+
+        this.messager.printMessage(Diagnostic.Kind.NOTE, String.format("获取函数 %s.%s:%s", this.fnUnit.getPackageName(), this.fnUnit.getClassName(), methodElement.getSimpleName()));
+
+
+        TypeMirror returnTypeMirror = methodElement.getReturnType();
+        TypeName returnType = TypeName.get(returnTypeMirror);
+
+        if (!returnType.toString().startsWith("io.vertx.core.Future")) {
+            throw new Exception(String.format("%s.%s 函数的返回值不是io.vertx.core.Future。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+        }
+
+        ParameterizedTypeName returnParameterizedType = (ParameterizedTypeName) returnType;
+        this.fnUnit.setReturnElementClass(returnParameterizedType.typeArguments.get(0));
+        this.fnUnit.setReturnClass(returnParameterizedType);
+
+        List<? extends VariableElement> parameters = methodElement.getParameters();
+        if (parameters == null || parameters.size() == 0) {
+            throw new Exception(String.format("%s.%s 函数的参数为空。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+        }
+
+        for (int i = 0; i < parameters.size(); i++) {
+            VariableElement parameter = parameters.get(i);
+            if (i == 0) {
+                if (!TypeName.get(parameter.asType()).toString().equals("org.pharosnet.vertx.faas.context.Context")) {
+                    throw new Exception(String.format("%s.%s 函数的第一个参数不是org.pharosnet.vertx.faas.context.Context。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+                }
+            }
+            this.fnUnit.getParameters().add(parameter);
         }
 
     }

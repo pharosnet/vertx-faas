@@ -1,7 +1,6 @@
 package org.pharosnet.vertx.faas.codegen.annotation;
 
 
-import org.pharosnet.vertx.faas.AbstractFn;
 import org.pharosnet.vertx.faas.component.http.HttpMethod;
 
 import java.lang.annotation.ElementType;
@@ -37,6 +36,6 @@ public @interface Fn {
 
     String[] tags() default {};
 
-    Class<? extends AbstractFn> implement();
+    String implementClassFullName();
 
 }
