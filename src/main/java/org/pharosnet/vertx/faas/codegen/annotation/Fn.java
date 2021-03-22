@@ -24,9 +24,9 @@ public @interface Fn {
 
     boolean authentication() default false;
 
-    String[] consumes() default {};
+    String consumes() default "";
 
-    String[] produces() default {"application/json"};
+    String produces() default "application/json";
 
     long bodyLimit() default 4194304;
 

@@ -43,8 +43,10 @@ public class FnGenerator {
         FnServiceGenerator fnServiceGenerator = new FnServiceGenerator(this.messager);
         fnServiceGenerator.generate(this.fnUnit, filer, this.typeMirror);
         // 生成fn的 proxy
-
+        FnProxyGenerator fnProxyGenerator = new FnProxyGenerator(this.messager);
+        fnProxyGenerator.generate(this.fnUnit, filer, this.typeMirror);
         // 生成fn的 router
+
         return this.fnUnit;
     }
 
@@ -73,6 +75,7 @@ public class FnGenerator {
 
         this.messager.printMessage(Diagnostic.Kind.NOTE, String.format("获取函数 %s.%s:%s", this.fnUnit.getPackageName(), this.fnUnit.getClassName(), methodElement.getSimpleName()));
 
+        this.fnUnit.setMethodName(methodElement.getSimpleName().toString());
 
         TypeMirror returnTypeMirror = methodElement.getReturnType();
         TypeName returnType = TypeName.get(returnTypeMirror);

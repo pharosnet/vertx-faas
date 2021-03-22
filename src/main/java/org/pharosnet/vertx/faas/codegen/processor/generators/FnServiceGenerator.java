@@ -135,7 +135,7 @@ public class FnServiceGenerator {
 
         StringBuilder paramsNameBuffer = new StringBuilder();
 
-        MethodSpec.Builder executeMethod = MethodSpec.methodBuilder("execute")
+        MethodSpec.Builder executeMethod = MethodSpec.methodBuilder(fnUnit.getMethodName())
                 .addModifiers(Modifier.PUBLIC)
                 .returns(TypeName.VOID);
 
@@ -196,7 +196,7 @@ public class FnServiceGenerator {
             }
             executeMethod.addCode("// valid parameters \n");
             String paramsValidCode = "try { \n" +
-                    "\t$T method = $T.class.getMethod(\"execute\" " + paramsClassBuffer.toString() + "); \n" +
+                    "\t$T method = $T.class.getMethod(\"" + fnUnit.getMethodName() + "\" " + paramsClassBuffer.toString() + "); \n" +
                     "\tObject[] parameterValues = new Object[]{" + paramsNames + "}; \n" +
                     "\tboolean valid = $T.validateExecutables(method, fn, parameterValues, handler); \n" +
                     "\tif (!valid) { \n" +
@@ -217,14 +217,14 @@ public class FnServiceGenerator {
         }
 
         // execute
-        String executeCode = "this.fn.execute(" + paramsNames + ") \n" +
+        String executeCode = "this.fn." + fnUnit.getMethodName() + "(" + paramsNames + ") \n" +
                 "\t\t.onSuccess(r -> handler.handle($T.succeededFuture(r))) \n" +
                 "\t\t.onFailure(e -> { \n" +
                 "\t\t\tlog.error(\"{} 执行错误！\", $T.class.toString(), e); \n" +
                 "\t\t\thandler.handle($T.fail(e)); \n" +
                 "\t\t});\n\n";
 
-        executeMethod.addCode("// executeCode \n");
+        executeMethod.addCode("// execute \n");
         executeMethod.addCode(executeCode,
                 ClassName.get(Future.class),
                 ClassName.get(pkg, fnClassName),

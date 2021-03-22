@@ -21,6 +21,7 @@ public class FnUnit {
 
     private String packageName;
 
+    private String methodName;
     private ParameterizedTypeName returnClass;
     private TypeName returnElementClass;
 
@@ -32,6 +33,14 @@ public class FnUnit {
 
     public void setFn(Fn fn) {
         this.fn = fn;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
     public String getClassName() {
