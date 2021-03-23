@@ -6,6 +6,8 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.serviceproxy.ServiceException;
+import org.pharosnet.vertx.faas.codegen.annotation.EnableOAS;
+import org.pharosnet.vertx.faas.commons.ClassUtils;
 import org.pharosnet.vertx.faas.component.http.auth.JwtAuths;
 import org.pharosnet.vertx.faas.component.http.config.JwtConfig;
 import org.pharosnet.vertx.faas.component.http.config.OpenApiConfig;
@@ -13,6 +15,7 @@ import org.pharosnet.vertx.faas.exception.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 public abstract class AbstractHttpRouter {
@@ -21,13 +24,31 @@ public abstract class AbstractHttpRouter {
 
     public abstract void build(Vertx vertx, Router router);
 
-    public void buildOpenApi(Router router, OpenApiConfig config) {
+    public void buildOpenApi(Router router, OpenApiConfig config, String basePackage) {
         if (config == null) {
             return;
         }
         String jsonPath = Optional.ofNullable(config.getJsonPath()).orElse("").trim();
         if (jsonPath.length() > 0) {
-            router.route(jsonPath).handler(StaticHandler.create("openapi.json"));
+            String resourcePath;
+            try {
+                List<Class<?>> enableOASClasses = ClassUtils.scan(basePackage, EnableOAS.class);
+                if (enableOASClasses.isEmpty()) {
+                    throw new Exception("无法加载到@EnableOAS的类");
+                }
+                if (enableOASClasses.size() > 1) {
+                    throw new Exception("@EnableOAS的类只能有一个");
+                }
+                EnableOAS enableOAS = enableOASClasses.get(0).getAnnotation(EnableOAS.class);
+                resourcePath = enableOAS.resourcePath().trim();
+                if (resourcePath.length() == 0) {
+                    throw new Exception("@EnableOAS的resourcePath值不能为空。");
+                }
+            } catch (Exception exception) {
+                log.error("配置中已激活OpenAPI，但是创建该路由失败。", exception);
+                throw new RuntimeException("配置中已激活OpenAPI，但是创建该路由失败。", exception);
+            }
+            router.route(jsonPath).handler(StaticHandler.create(resourcePath));
             String webPathPrefix = Optional.ofNullable(config.getWebPathPrefix()).orElse("").trim();
             String webStaticResourcePath = Optional.ofNullable(config.getWebStaticResourcePath()).orElse("").trim();
             if (webPathPrefix.length() > 0 && webStaticResourcePath.length() > 0) {

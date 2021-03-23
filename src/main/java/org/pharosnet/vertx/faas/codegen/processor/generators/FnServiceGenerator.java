@@ -38,7 +38,7 @@ public class FnServiceGenerator {
         String serviceImplClassName = String.format("%sServiceImpl", fnClassName);
 
         // ADDRESS
-        String address = String.format("%s-%s", fnUnit.getFn().module(), fnUnit.getFn().id());
+        String address = String.format("%s-%s", pkg.replace(".", "-"), serviceClassName);
         FieldSpec.Builder staticAddressField = FieldSpec.builder(
                 ClassName.get("java.lang", "String"), "SERVICE_ADDRESS",
                 Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer("$S", address);

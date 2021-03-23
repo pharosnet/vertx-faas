@@ -1,10 +1,11 @@
 package org.pharosnet.vertx.faas.codegen.processor;
 
 import com.google.auto.service.AutoService;
+import io.vertx.codegen.annotations.ModuleGen;
+import org.pharosnet.vertx.faas.codegen.annotation.EnableOAS;
 import org.pharosnet.vertx.faas.codegen.annotation.Fn;
-import org.pharosnet.vertx.faas.codegen.processor.generators.FnGenerator;
-import org.pharosnet.vertx.faas.codegen.processor.generators.FnUnit;
 import org.pharosnet.vertx.faas.codegen.processor.generators.ModuleGenerator;
+import org.pharosnet.vertx.faas.codegen.processor.generators.OASGenerator;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -12,14 +13,13 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @SupportedAnnotationTypes({
-        "org.pharosnet.vertx.faas.codegen.annotation.Fn",
+        "io.vertx.codegen.annotations.ModuleGen",
+        "org.pharosnet.vertx.faas.codegen.annotation.EnableOAS",
 })
+@SupportedOptions({"codegen.output"})
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 @AutoService(Processor.class)
 public class FaaSCodeGenProcessor extends AbstractProcessor {
@@ -38,50 +38,60 @@ public class FaaSCodeGenProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        return this.generateFn(roundEnv);
-    }
-
-    private boolean generateFn(RoundEnvironment roundEnv) {
-        Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(Fn.class);
-        if (elements == null || elements.isEmpty()) {
-            return true;
-        }
-
-        List<FnGenerator> generators = elements
-                .stream()
-                .map(e -> {
-                    try {
-                        return new FnGenerator(this.messager, elementUtils, (TypeElement) e);
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                        messager.printMessage(Diagnostic.Kind.ERROR, exception.getMessage());
-                        throw new RuntimeException(exception);
-                    }
-                }).collect(Collectors.toList());
-
-        List<FnUnit> fnUnits = new ArrayList<>();
-        for (FnGenerator generator : generators) {
-            try {
-                fnUnits.add(generator.generate(filer));
-            } catch (Exception cause) {
-                cause.printStackTrace();
-                messager.printMessage(Diagnostic.Kind.ERROR, cause.getMessage());
-                return false;
-            }
-        }
-
-        // 生成fn的 vertile 和 deployment
-        try {
-            ModuleGenerator moduleGenerator = new ModuleGenerator(fnUnits);
-            moduleGenerator.generate(filer);
-        } catch (Exception cause) {
-            cause.printStackTrace();
-            messager.printMessage(Diagnostic.Kind.ERROR, cause.getMessage());
-            return false;
-        }
-
+        Map<String, List<Element>> moduleFnMap = this.generateModuleFn(roundEnv);
+        this.generateOAS(roundEnv, moduleFnMap);
         return true;
     }
 
+    private void generateOAS(RoundEnvironment roundEnv, Map<String, List<Element>> moduleFnMap) {
+        Set<? extends Element> oasElements = roundEnv.getElementsAnnotatedWith(EnableOAS.class);
+        if (oasElements == null || oasElements.isEmpty()) {
+            return;
+        }
+        Element oasElement = oasElements.iterator().next();
+        EnableOAS enableOAS = oasElement.getAnnotation(EnableOAS.class);
+        try {
+            new OASGenerator(this.messager, this.elementUtils, this.filer).generate(moduleFnMap, enableOAS);
+        } catch (Exception exception) {
+            messager.printMessage(Diagnostic.Kind.ERROR, "生成 OpenAPI 失败。");
+            messager.printMessage(Diagnostic.Kind.ERROR, exception.getMessage());
+            throw new RuntimeException(exception);
+        }
+    }
+
+    private Map<String, List<Element>> generateModuleFn(RoundEnvironment roundEnv) {
+        Map<String, List<Element>> moduleFnMap = new HashMap<>();
+
+        Set<? extends Element> moduleElements = roundEnv.getElementsAnnotatedWith(ModuleGen.class);
+        if (moduleElements == null || moduleElements.isEmpty()) {
+            return moduleFnMap;
+        }
+        for (Element moduleElement : moduleElements) {
+            ModuleGen moduleGen = moduleElement.getAnnotation(ModuleGen.class);
+            List<Element> fnElements = new ArrayList<>();
+            List<? extends Element> classElements = elementUtils.getPackageOf(moduleElement).getEnclosedElements();
+            for (Element classElement : classElements) {
+                Fn fn = classElement.getAnnotation(Fn.class);
+                if (fn == null) {
+                    continue;
+                }
+                fnElements.add(classElement);
+            }
+            if (fnElements.isEmpty()) {
+                continue;
+            }
+
+            try {
+                new ModuleGenerator(this.messager, this.elementUtils, this.filer).generate(moduleGen, fnElements);
+            } catch (Exception exception) {
+                messager.printMessage(Diagnostic.Kind.ERROR, String.format("生成 %s:%s 模块的函数失败。", moduleGen.groupPackage(), moduleGen.name()));
+                messager.printMessage(Diagnostic.Kind.ERROR, exception.getMessage());
+                throw new RuntimeException(exception);
+            }
+            moduleFnMap.put(moduleGen.name(), fnElements);
+        }
+
+        return moduleFnMap;
+    }
 
 }

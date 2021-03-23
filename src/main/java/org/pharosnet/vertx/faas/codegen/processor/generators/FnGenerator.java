@@ -26,6 +26,7 @@ public class FnGenerator {
     private FnUnit fnUnit;
     private TypeMirror typeMirror;
 
+
     public void load(Elements elementUtils, TypeElement typeElement) throws Exception {
         String pkg = elementUtils.getPackageOf(typeElement).getQualifiedName().toString();
         String name = typeElement.getSimpleName().toString();
@@ -46,7 +47,8 @@ public class FnGenerator {
         FnProxyGenerator fnProxyGenerator = new FnProxyGenerator(this.messager);
         fnProxyGenerator.generate(this.fnUnit, filer, this.typeMirror);
         // 生成fn的 router
-
+        FnRouterGenerator fnRouterGenerator = new FnRouterGenerator(this.messager);
+        fnRouterGenerator.generate(this.fnUnit, filer, this.typeMirror);
         return this.fnUnit;
     }
 

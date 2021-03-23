@@ -17,7 +17,6 @@ public class ClassUtils {
 
     private static final Logger log = LoggerFactory.getLogger(ClassUtils.class);
 
-
     public static List<Class<?>> scan(String packageName, Class<? extends Annotation> annotation) throws Exception {
         List<Class<?>> targets = new ArrayList<>();
         try {

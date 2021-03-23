@@ -46,7 +46,7 @@ public class FnRouterGenerator {
         MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Vertx.class, "vertx")
-                .addStatement("this.fn = new $T(vertx)", ClassName.bestGuess(fnUnit.getFn().implementClassFullName()))
+                .addStatement("this.vertx = vertx")
                 .addStatement("this.service = $T.proxy(vertx)", ClassName.get(pkg, serviceClassName));
 
 
@@ -72,11 +72,11 @@ public class FnRouterGenerator {
                 .returns(ClassName.VOID);
         buildMethod.addCode(String.format("router.%s(\"%s\")\n", fnUnit.getFn().method().toString().toLowerCase(), fnUnit.getFn().path()));
         if (fnUnit.getFn().method().equals(HttpMethod.POST) || fnUnit.getFn().method().equals(HttpMethod.PUT) || fnUnit.getFn().method().equals(HttpMethod.PATCH)) {
-            buildMethod.addCode(String.format("\t\t.handler(BodyHandler.create().setBodyLimit(%d))\n", fnUnit.getFn().bodyLimit()));
+            buildMethod.addCode(String.format("\t\t.handler($T.create().setBodyLimit(%d))\n", fnUnit.getFn().bodyLimit()), ClassName.get("io.vertx.ext.web.handler", "BodyHandler"));
         }
-        buildMethod.addCode(String.format("\t\t.handler(TimeoutHandler.create(%d))\n", fnUnit.getFn().timeout()));
+        buildMethod.addCode(String.format("\t\t.handler($T.create(%d))\n", fnUnit.getFn().timeout()), ClassName.get("io.vertx.ext.web.handler", "TimeoutHandler"));
         if (fnUnit.getFn().latency()) {
-            buildMethod.addCode("\t\t.handler(ResponseContentTypeHandler.create())\n");
+            buildMethod.addCode("\t\t.handler($T.create())\n", ClassName.get("io.vertx.ext.web.handler", "ResponseContentTypeHandler"));
         }
         String produces = Optional.of(fnUnit.getFn().produces()).orElse("").trim().toLowerCase();
         if (produces.length() > 0) {
@@ -110,7 +110,7 @@ public class FnRouterGenerator {
             PathParam pathParam = parameter.getAnnotation(PathParam.class);
             if (pathParam != null) {
                 String pathParamKey = pathParam.value();
-                handleMethod.addStatement(String.format("$T %s = $T.routingContext.pathParam(\"%s\")", paramName, pathParamKey), parameter.asType());
+                handleMethod.addStatement(String.format("$T %s = routingContext.pathParam(\"%s\")", paramName, pathParamKey), parameter.asType());
                 continue;
             }
             QueryParam queryParam = parameter.getAnnotation(QueryParam.class);
