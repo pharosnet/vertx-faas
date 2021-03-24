@@ -100,8 +100,8 @@ public class FnGenerator {
         for (int i = 0; i < parameters.size(); i++) {
             VariableElement parameter = parameters.get(i);
             if (i == 0) {
-                if (!TypeName.get(parameter.asType()).toString().equals("org.pharosnet.vertx.faas.context.Context")) {
-                    throw new Exception(String.format("%s.%s 函数的第一个参数不是org.pharosnet.vertx.faas.context.Context。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
+                if (!TypeName.get(parameter.asType()).toString().equals("org.pharosnet.vertx.faas.context.FnContext")) {
+                    throw new Exception(String.format("%s.%s 函数的第一个参数不是org.pharosnet.vertx.faas.context.FnContext。", this.fnUnit.getPackageName(), this.fnUnit.getClassName()));
                 }
             }
             this.fnUnit.getParameters().add(parameter);

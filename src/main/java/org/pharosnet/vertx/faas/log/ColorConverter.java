@@ -3,7 +3,7 @@ package org.pharosnet.vertx.faas.log;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.CompositeConverter;
-import org.pharosnet.vertx.faas.commons.AppLevel;
+import org.pharosnet.vertx.faas.commons.FaaSActive;
 import org.pharosnet.vertx.faas.log.ansi.AnsiColor;
 import org.pharosnet.vertx.faas.log.ansi.AnsiElement;
 import org.pharosnet.vertx.faas.log.ansi.AnsiOutput;
@@ -18,8 +18,8 @@ public class ColorConverter extends CompositeConverter<ILoggingEvent> {
     private static final Map<String, AnsiElement> ELEMENTS;
 
     static {
-        AppLevel appLevel = AppLevel.get();
-        if (appLevel.equals(AppLevel.DEV)) {
+        FaaSActive appLevel = FaaSActive.get();
+        if (appLevel.equals(FaaSActive.DEV)) {
             AnsiOutput.setEnabled(AnsiOutput.Enabled.ALWAYS);
         }
         Map<String, AnsiElement> ansiElements = new HashMap<>();

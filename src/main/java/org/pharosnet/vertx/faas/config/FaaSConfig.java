@@ -8,7 +8,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.pharosnet.vertx.faas.commons.AppLevel;
+import org.pharosnet.vertx.faas.commons.FaaSActive;
 import org.pharosnet.vertx.faas.component.http.config.HttpConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class FaaSConfig {
 
     public static Future<FaaSConfig> read(Vertx vertx) {
         Promise<FaaSConfig> promise = Promise.promise();
-        String filename = String.format("config-%s.json", AppLevel.get().getValue());
+        String filename = String.format("config-%s.json", FaaSActive.get().getValue());
         URL configURL = Thread.currentThread().getContextClassLoader().getResource(filename);
         if (configURL == null) {
             log.error("读取配置文件错误，无法找到文件。{}", filename);

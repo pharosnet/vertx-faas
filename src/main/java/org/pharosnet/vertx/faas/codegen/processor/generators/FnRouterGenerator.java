@@ -10,7 +10,7 @@ import org.pharosnet.vertx.faas.codegen.annotation.PathParam;
 import org.pharosnet.vertx.faas.codegen.annotation.QueryParam;
 import org.pharosnet.vertx.faas.codegen.annotation.RequestBody;
 import org.pharosnet.vertx.faas.component.http.HttpMethod;
-import org.pharosnet.vertx.faas.context.Context;
+import org.pharosnet.vertx.faas.context.FnContext;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -119,7 +119,7 @@ public class FnRouterGenerator {
                         fnUnit.getReturnElementClass()
                 ),
                 ClassName.get(Promise.class));
-        handleMethod.addStatement("$T context = $T.fromRoutingContext(routingContext)", ClassName.get(Context.class), ClassName.get(Context.class));
+        handleMethod.addStatement("$T context = $T.fromRoutingContext(routingContext)", ClassName.get(FnContext.class), ClassName.get(FnContext.class));
 
         StringBuilder paramsNameBuffer = new StringBuilder();
         for (VariableElement parameter : fnUnit.getParameters()) {
