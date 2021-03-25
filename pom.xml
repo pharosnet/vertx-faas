@@ -50,11 +50,6 @@
         </dependency>
         <!--   <<< logger  -->
 
-        <!--   module >>> -->
-
-
-        <!--   <<< module  -->
-
         <!--   test >>> -->
         <dependency>
             <groupId>io.vertx</groupId>

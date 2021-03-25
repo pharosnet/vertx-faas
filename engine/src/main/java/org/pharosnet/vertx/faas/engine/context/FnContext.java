@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import org.pharosnet.vertx.faas.core.context.Context;
-
 import java.util.Optional;
 import java.util.UUID;
 
