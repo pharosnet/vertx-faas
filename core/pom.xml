@@ -4,71 +4,37 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.pharosnet</groupId>
-    <artifactId>vertx-faas</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <parent>
+        <groupId>org.pharosnet</groupId>
+        <artifactId>vertx-faas</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
 
+    <artifactId>vertx-faas-core</artifactId>
 
-    <name>vertx-faas</name>
+    <name>faas-core</name>
     <url>https://github.com/pharosnet/vertx-faas</url>
+    <description>Vertx FaaS - CORE</description>
 
-    <description>Vertx FaaS</description>
-
-    <modules>
-        <module>core</module>
-        <module>engine</module>
-    </modules>
-
-    <properties>
-        <faas.version>0.0.1-SNAPSHOT</faas.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <vertx.version>4.0.3</vertx.version>
-        <junit-jupiter.version>5.4.0</junit-jupiter.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-stack-depchain</artifactId>
-                <version>${vertx.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
-        <!--   logger >>> -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-        <!--   <<< logger  -->
 
-        <!--   test >>> -->
+        <!--   vertx >>> -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-junit5</artifactId>
-            <scope>test</scope>
+            <artifactId>vertx-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-service-proxy</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <classifier>processor</classifier>
         </dependency>
-        <!--   <<< test  -->
+        <!--   <<< vertx  -->
+
     </dependencies>
 
     <build>
@@ -210,50 +176,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
         </plugins>
     </build>
-
-    <developers>
-        <developer>
-            <name>wangminxiang</name>
-            <email>wangminxiang@pharosnet.org</email>
-        </developer>
-    </developers>
-
-    <scm>
-        <tag>main</tag>
-        <url>https://github.com/pharosnet/vertx-faas</url>
-        <connection>scm:git:git@github.com:pharosnet/vertx-faas.git</connection>
-        <developerConnection>scm:git:git@github.com:RyougiNevermore/vertx-faas.git</developerConnection>
-    </scm>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-        <license>
-            <name>Eclipse Public License - v 2.0</name>
-            <url>http://www.eclipse.org/legal/epl-v20.html</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 </project>
