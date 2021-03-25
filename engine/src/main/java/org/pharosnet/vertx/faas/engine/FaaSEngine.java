@@ -4,6 +4,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.vertx.core.*;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -176,11 +177,12 @@ public class FaaSEngine {
                     }
                     Config.read(vertx)
                             .compose(config -> {
+                                config.put("_faasOptions", new JsonObject().put("basePackage", this.basePackage));
                                 List<Future> deploymentFutures = new ArrayList<>();
                                 if (this.deployments != null && !this.deployments.isEmpty()) {
                                     deployments.forEach(deployment -> deploymentFutures.add(deployment.deploy(this.vertx, config)));
                                 }
-                                deploymentFutures.add(new HttpDeployment(router, this.basePackage).deploy(this.vertx, config));
+                                deploymentFutures.add(new HttpDeployment(router).deploy(this.vertx, config));
                                 return CompositeFuture.all(deploymentFutures);
                             })
                             .onSuccess(compositeFuture -> {

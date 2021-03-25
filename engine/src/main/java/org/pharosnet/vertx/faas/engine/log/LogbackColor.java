@@ -4,13 +4,13 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.color.ANSIConstants;
 import ch.qos.logback.core.pattern.color.ForegroundCompositeConverterBase;
-import org.pharosnet.vertx.faas.commons.AppLevel;
+import org.pharosnet.vertx.faas.core.commons.FaaSActive;
 
 public class LogbackColor extends ForegroundCompositeConverterBase<ILoggingEvent> {
 
     @Override
     protected String getForegroundColorCode(ILoggingEvent event) {
-        if (AppLevel.get().equals(AppLevel.DEV)) {
+        if (FaaSActive.get().equals(FaaSActive.LOCAL)) {
             Level level = event.getLevel();
             switch (level.levelInt) {
                 //ERROR等级为红色

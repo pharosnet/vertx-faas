@@ -7,7 +7,7 @@ import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
-import org.pharosnet.vertx.faas.commons.AppLevel;
+import org.pharosnet.vertx.faas.core.commons.FaaSActive;
 
 import java.util.Optional;
 
@@ -23,10 +23,12 @@ public class LoggerStartupListener  extends ContextAwareBase implements LoggerCo
 
         context.putProperty("APP_VERSION", Optional.ofNullable(System.getenv("FAAS_APP_VERSION")).orElse("EMPTY").trim());
 
-        AppLevel level = AppLevel.get();
+        FaaSActive level = FaaSActive.get();
         Context context = getContext();
         context.putProperty("ACTIVE_PROFILE", level.getValue().toLowerCase());
         switch (level) {
+            case LOCAL:
+                context.putProperty("ACTIVE_PROFILE", level.getValue());
             case DEV:
                 context.putProperty("ACTIVE_PROFILE", level.getValue());
             case TEST:

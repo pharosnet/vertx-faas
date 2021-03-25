@@ -5,25 +5,45 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.pharosnet.vertx</groupId>
-        <artifactId>faas</artifactId>
-        <version>0.0.1</version>
+        <groupId>org.pharosnet</groupId>
+        <artifactId>vertx-faas</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>faas-engine</artifactId>
+    <artifactId>vertx-faas-engine</artifactId>
 
     <name>faas-engine</name>
     <url>https://github.com/pharosnet/vertx-faas</url>
 
+    <description>Vertx FaaS - ENGINE</description>
+
 
     <dependencies>
 
+        <!-- jackson >>> -->
         <dependency>
-            <groupId>org.pharosnet.vertx</groupId>
-            <artifactId>faas-core</artifactId>
-            <version>0.0.1</version>
-            <scope>compile</scope>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-modules-java8</artifactId>
+            <version>2.11.3</version>
+            <type>pom</type>
+            <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <!-- <<< jackson -->
 
         <!--   logger >>> -->
         <dependency>
@@ -60,6 +80,11 @@
         <!--   vertx >>> -->
         <dependency>
             <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
             <artifactId>vertx-config</artifactId>
         </dependency>
 
@@ -77,6 +102,17 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-hazelcast</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-service-proxy</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <classifier>processor</classifier>
+        </dependency>
         <!--   <<< vertx  -->
 
         <!--   netty >>> -->
@@ -89,7 +125,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>4.1.52.Final</version>
+            <version>4.1.60.Final</version>
             <classifier>linux-x86_64</classifier>
         </dependency>
         <!--   <<< netty  -->
@@ -128,12 +164,6 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-models</artifactId>
             <version>2.1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.pharosnet.vertx</groupId>
-            <artifactId>faas</artifactId>
-            <version>0.0.1</version>
-            <scope>compile</scope>
         </dependency>
         <!--   <<< swagger  -->
 

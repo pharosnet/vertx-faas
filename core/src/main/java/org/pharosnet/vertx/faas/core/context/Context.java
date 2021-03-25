@@ -6,7 +6,8 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class Context {
 
-    public Context() {
+    public Context(String id) {
+        this.id = id;
         this.data = new JsonObject();
     }
 

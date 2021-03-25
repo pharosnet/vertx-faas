@@ -19,14 +19,12 @@ public class HttpVerticle extends AbstractVerticle {
 
     private static final Logger log = LoggerFactory.getLogger(HttpVerticle.class);
 
-    public HttpVerticle(MessageConsumerRegister register, AbstractHttpRouter httpRouter, String basePackage) {
+    public HttpVerticle(MessageConsumerRegister register, AbstractHttpRouter httpRouter) {
         this.register = register;
         this.httpRouter = httpRouter;
-        this.basePackage = basePackage;
     }
 
     private Http http;
-    private final String basePackage;
     private final AbstractHttpRouter httpRouter;
     private final MessageConsumerRegister register;
     private List<MessageConsumer<JsonObject>> consumers;
@@ -62,7 +60,8 @@ public class HttpVerticle extends AbstractVerticle {
         if (log.isDebugEnabled()) {
             log.debug("NATIVE 开启 {}", vertx.isNativeTransportEnabled());
         }
-        this.http = new Http(this.vertx, this.basePackage, HttpConfig.mapFrom(this.config()));
+        String basePackage = this.config().getJsonObject("_faasOptions").getString("basePackage");
+        this.http = new Http(this.vertx, basePackage, HttpConfig.mapFrom(this.config().getJsonObject("http")));
 
         this.http.run(this.httpRouter)
                 .onSuccess(r -> {

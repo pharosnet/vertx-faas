@@ -7,10 +7,10 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.pharosnet.vertx.faas.codegen.annotation.FnDeployment;
-import org.pharosnet.vertx.faas.component.ComponentDeployment;
-import org.pharosnet.vertx.faas.component.MessageConsumerRegister;
-import org.pharosnet.vertx.faas.config.FaaSConfig;
+import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
+import org.pharosnet.vertx.faas.core.components.MessageConsumerRegister;
+import org.pharosnet.vertx.faas.engine.codegen.annotation.FnDeployment;
+import org.pharosnet.vertx.faas.engine.config.Config;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -54,7 +54,7 @@ public class DeploymentGenerator {
         MethodSpec.Builder deployMethod = MethodSpec.methodBuilder("deploy")
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get(Vertx.class), "vertx")
-                .addParameter(ClassName.get(FaaSConfig.class), "config")
+                .addParameter(ClassName.get(Config.class), "config")
                 .addStatement("$T deploymentOptions = new $T()", ClassName.get(DeploymentOptions.class), ClassName.get(DeploymentOptions.class))
                 .addStatement("deploymentOptions.setConfig($T.mapFrom(config))", ClassName.get(JsonObject.class))
                 .addStatement("return vertx.deployVerticle(new $T(super.getRegister()), deploymentOptions)", ClassName.get(pkg, fnVerticleClassName))

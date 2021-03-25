@@ -3,11 +3,11 @@ package org.pharosnet.vertx.faas.engine.log;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.CompositeConverter;
-import org.pharosnet.vertx.faas.commons.AppLevel;
-import org.pharosnet.vertx.faas.log.ansi.AnsiColor;
-import org.pharosnet.vertx.faas.log.ansi.AnsiElement;
-import org.pharosnet.vertx.faas.log.ansi.AnsiOutput;
-import org.pharosnet.vertx.faas.log.ansi.AnsiStyle;
+import org.pharosnet.vertx.faas.core.commons.FaaSActive;
+import org.pharosnet.vertx.faas.engine.log.ansi.AnsiColor;
+import org.pharosnet.vertx.faas.engine.log.ansi.AnsiElement;
+import org.pharosnet.vertx.faas.engine.log.ansi.AnsiOutput;
+import org.pharosnet.vertx.faas.engine.log.ansi.AnsiStyle;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,8 +18,8 @@ public class ColorConverter extends CompositeConverter<ILoggingEvent> {
     private static final Map<String, AnsiElement> ELEMENTS;
 
     static {
-        AppLevel appLevel = AppLevel.get();
-        if (appLevel.equals(AppLevel.DEV)) {
+        FaaSActive active = FaaSActive.get();
+        if (active.equals(FaaSActive.DEV)) {
             AnsiOutput.setEnabled(AnsiOutput.Enabled.ALWAYS);
         }
         Map<String, AnsiElement> ansiElements = new HashMap<>();

@@ -13,12 +13,12 @@ import java.util.UUID;
 public class FnContext extends Context {
 
     public static FnContext fromRoutingContext(RoutingContext routingContext) {
-        FnContext context = new FnContext();
+        FnContext context;
         String requestId = Optional.ofNullable(routingContext.request().getHeader("x-request-id")).orElse("").trim();
         if (requestId.length() > 0) {
-            context.setId(requestId);
+            context = new FnContext(requestId);
         } else {
-            context.setId(UUID.randomUUID().toString());
+            context = new FnContext(UUID.randomUUID().toString());
         }
         if (routingContext.user() != null) {
             User user = routingContext.user();
@@ -28,21 +28,30 @@ public class FnContext extends Context {
         return context;
     }
 
-    public FnContext() {
-        super();
+    public FnContext(String id) {
+        super(id);
     }
 
     public FnContext(JsonObject jsonObject) {
         super(jsonObject);
-        this.principal = jsonObject.getJsonObject("principal");
-        this.attributes = jsonObject.getJsonObject("attributes");
+        if (jsonObject.containsKey("principal")) {
+            this.principal = jsonObject.getJsonObject("principal");
+        }
+        if (jsonObject.containsKey("attributes")) {
+            this.attributes = jsonObject.getJsonObject("attributes");
+        }
     }
 
     @Override
     public JsonObject toJson() {
-        return super.toJson()
-                .put("principal", this.principal)
-                .put("attributes", this.attributes);
+        JsonObject jsonObject = super.toJson();
+        if (this.principal != null) {
+            jsonObject.put("principal", this.principal);
+        }
+        if (this.attributes != null) {
+            jsonObject.put("attributes", this.attributes);
+        }
+        return jsonObject;
     }
 
     private JsonObject principal;
