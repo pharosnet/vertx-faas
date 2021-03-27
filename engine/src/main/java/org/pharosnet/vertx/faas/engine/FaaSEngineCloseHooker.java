@@ -4,8 +4,8 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class FaaSEngineCloseHooker extends Thread {
 
-    private static final Logger log = LoggerFactory.getLogger(FaaSEngineCloseHooker.class);
+    private static final Logger log = LogManager.getLogger(FaaSEngineCloseHooker.class);
 
     public FaaSEngineCloseHooker(Vertx vertx, List<String> deploymentIds) {
         this.vertx = vertx;

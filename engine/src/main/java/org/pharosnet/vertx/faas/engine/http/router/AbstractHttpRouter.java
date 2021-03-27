@@ -6,22 +6,20 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.serviceproxy.ServiceException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.pharosnet.vertx.faas.core.exceptions.UnauthorizedException;
 import org.pharosnet.vertx.faas.engine.codegen.annotation.EnableOAS;
-import org.pharosnet.vertx.faas.engine.context.FnContext;
 import org.pharosnet.vertx.faas.engine.http.auth.JwtAuths;
 import org.pharosnet.vertx.faas.engine.http.config.JwtConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public abstract class AbstractHttpRouter {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractHttpRouter.class);
+    private static final Logger log = LogManager.getLogger(AbstractHttpRouter.class);
 
     public abstract void build(Vertx vertx, Router router);
 

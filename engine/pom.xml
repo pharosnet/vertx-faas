@@ -51,38 +51,6 @@
         </dependency>
         <!-- <<< jackson -->
 
-        <!--   logger >>> -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.2.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback.contrib</groupId>
-            <artifactId>logback-jackson</artifactId>
-            <version>0.1.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-            <version>6.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <version>3.1.2</version>
-        </dependency>
-        <!--   <<< logger  -->
-
         <!--   vertx >>> -->
         <dependency>
             <groupId>io.vertx</groupId>
@@ -257,6 +225,7 @@
                             <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
                             <compilerArgs>
                                 <arg>-Acodegen.output=${project.basedir}/src/main</arg>
+                                <arg>-J--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
                             </compilerArgs>
                         </configuration>
                     </execution>

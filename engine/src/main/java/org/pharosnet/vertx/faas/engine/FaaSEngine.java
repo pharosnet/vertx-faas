@@ -3,11 +3,15 @@ package org.pharosnet.vertx.faas.engine;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
 import org.pharosnet.vertx.faas.engine.codegen.annotation.FnDeployment;
@@ -16,8 +20,6 @@ import org.pharosnet.vertx.faas.engine.http.HttpDeployment;
 import org.pharosnet.vertx.faas.engine.http.router.AbstractHttpRouter;
 import org.pharosnet.vertx.faas.engine.http.router.DefaultHttpRouter;
 import org.pharosnet.vertx.faas.engine.validator.Validators;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ import java.util.Optional;
 
 public class FaaSEngine {
 
-    private static final Logger log = LoggerFactory.getLogger(FaaSEngine.class);
+    private static final Logger log = LogManager.getLogger(FaaSEngine.class);
 
     public FaaSEngine() {
         this.init();
@@ -42,8 +44,9 @@ public class FaaSEngine {
     }
 
     protected void init() {
-        System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
-        System.setProperty("hazelcast.logging.type", "slf4j");
+        System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.Log4j2LogDelegateFactory");
+        System.setProperty("hazelcast.logging.type", "log4j2");
+        InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
 
         Validators.init();
         DatabindCodec.mapper()

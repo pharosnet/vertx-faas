@@ -7,17 +7,16 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pharosnet.vertx.faas.core.commons.FaaSActive;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.util.Locale;
 import java.util.Optional;
 
 public class Config {
 
-    private static final Logger log = LoggerFactory.getLogger(Config.class);
+    private static final Logger log = LogManager.getLogger(Config.class);
 
     private static final String PATH_KEY = "FAAS_CONFIG_PATH";
     private static final String KIND_KEY = "FAAS_CONFIG_KIND";

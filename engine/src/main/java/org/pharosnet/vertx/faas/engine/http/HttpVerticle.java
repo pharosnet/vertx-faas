@@ -6,18 +6,18 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pharosnet.vertx.faas.core.components.MessageConsumerRegister;
 import org.pharosnet.vertx.faas.engine.http.config.HttpConfig;
 import org.pharosnet.vertx.faas.engine.http.router.AbstractHttpRouter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class HttpVerticle extends AbstractVerticle {
 
-    private static final Logger log = LoggerFactory.getLogger(HttpVerticle.class);
+    private static final Logger log = LogManager.getLogger(HttpVerticle.class);
 
     public HttpVerticle(MessageConsumerRegister register, AbstractHttpRouter httpRouter) {
         this.register = register;

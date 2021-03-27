@@ -6,17 +6,17 @@ import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pharosnet.vertx.faas.core.commons.FileUtils;
 import org.pharosnet.vertx.faas.engine.http.config.JwtConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Optional;
 
 public class JwtAuths {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuths.class);
+    private static final Logger log = LogManager.getLogger(JwtAuths.class);
 
     private static JwtAuths instance = null;
 
