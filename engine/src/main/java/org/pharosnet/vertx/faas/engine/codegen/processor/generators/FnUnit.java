@@ -4,6 +4,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import org.pharosnet.vertx.faas.engine.codegen.annotation.Fn;
 
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class FnUnit {
     private String className;
 
     private String packageName;
+    private TypeElement implTypeElement;
 
     private String methodName;
     private ParameterizedTypeName returnClass;
@@ -90,5 +92,13 @@ public class FnUnit {
 
     public void setParameters(List<VariableElement> parameters) {
         this.parameters = parameters;
+    }
+
+    public TypeElement getImplTypeElement() {
+        return implTypeElement;
+    }
+
+    public void setImplTypeElement(TypeElement implTypeElement) {
+        this.implTypeElement = implTypeElement;
     }
 }

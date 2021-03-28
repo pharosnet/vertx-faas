@@ -28,7 +28,7 @@ public class DatabaseVerticle extends AbstractVerticle {
         if (this.register == null) {
             return;
         }
-        register.register(this.vertx);
+        this.register.register(this.vertx);
     }
 
     public Future<Void> unregister() {

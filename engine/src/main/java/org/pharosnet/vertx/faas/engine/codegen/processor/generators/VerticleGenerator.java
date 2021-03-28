@@ -45,45 +45,23 @@ public class VerticleGenerator {
                 ClassName.get(MessageConsumerRegister.class), "register",
                 Modifier.PRIVATE, Modifier.FINAL);
 
-        // consumers
-        FieldSpec.Builder consumersField = FieldSpec.builder(
-                ParameterizedTypeName.get(
-                        ClassName.get(List.class),
-                        ParameterizedTypeName.get(
-                                ClassName.get(MessageConsumer.class),
-                                ClassName.get(JsonObject.class)
-                        )
-                ), "consumers",
-                Modifier.PRIVATE);
 
         // register()
         MethodSpec.Builder registerMethod = MethodSpec.methodBuilder("register")
                 .addModifiers(Modifier.PRIVATE)
-                .addStatement("this.consumers = this.register.register(this.vertx)")
+                .addCode("if (this.register == null) {\n")
+                .addCode("\treturn;\n")
+                .addCode("}\n")
+                .addCode("this.register.register(this.vertx);")
                 .returns(ClassName.VOID);
 
         // unregister()
         MethodSpec.Builder unregisterMethod = MethodSpec.methodBuilder("unregister")
                 .addModifiers(Modifier.PRIVATE)
-                .addStatement("$T promise = $T.promise()",
-                        ParameterizedTypeName.get(ClassName.get(Promise.class), ClassName.get(Void.class)),
-                        ClassName.get(Promise.class))
-                .addCode("if (consumers == null) {\n")
-                .addCode("\tpromise.complete();\n")
-                .addCode("\treturn promise.future();\n")
+                .addCode("if (this.register == null) {\n")
+                .addCode("\treturn $T.succeededFuture();\n", ClassName.get(Future.class))
                 .addCode("}\n")
-                .addCode("$T compositeFuture = $T.all(consumers.stream().map(consumer -> {\n",
-                        ClassName.get(CompositeFuture.class), ClassName.get(CompositeFuture.class))
-                .addCode("\t$T unregisterPromise = $T.promise();\n",
-                        ParameterizedTypeName.get(ClassName.get(Promise.class), ClassName.get(Void.class)),
-                        ClassName.get(Promise.class))
-                .addCode("\tconsumer.unregister(unregisterPromise);\n")
-                .addCode("\treturn unregisterPromise.future();\n")
-                .addCode("}).collect($T.toList()));\n", ClassName.get(Collectors.class))
-                .addCode("\n")
-                .addCode("compositeFuture.onSuccess(r -> promise.complete());\n")
-                .addCode("compositeFuture.onFailure(promise::fail);\n")
-                .addCode("return promise.future();")
+                .addCode("return this.register.unregister();")
                 .returns(ParameterizedTypeName.get(ClassName.get(Future.class), ClassName.get(Void.class)));
 
         // start()
@@ -111,7 +89,6 @@ public class VerticleGenerator {
                 .superclass(ClassName.get(AbstractVerticle.class))
                 .addMethod(constructor.build())
                 .addField(registerField.build())
-                .addField(consumersField.build())
                 .addMethod(registerMethod.build())
                 .addMethod(unregisterMethod.build())
                 .addMethod(startMethod.build())

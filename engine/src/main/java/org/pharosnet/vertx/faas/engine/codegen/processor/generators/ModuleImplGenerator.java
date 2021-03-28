@@ -9,9 +9,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import java.util.List;
 
-public class ModuleGenerator {
+public class ModuleImplGenerator {
 
-    public ModuleGenerator(Messager messager, Elements elementUtils, Filer filer) {
+    public ModuleImplGenerator(Messager messager, Elements elementUtils, Filer filer) {
         this.messager = messager;
         this.elementUtils = elementUtils;
         this.filer = filer;
@@ -22,10 +22,10 @@ public class ModuleGenerator {
     private Filer filer;
 
 
-    public void generate(String pkg, ModuleGen moduleGen, List<Element> fnElements) throws Exception {
-        for (Element element : fnElements) {
-            FnGenerator fnGenerator = new FnGenerator(this.messager, this.elementUtils, (TypeElement) element, moduleGen);
-            fnGenerator.generate(this.filer);
+    public void generate(String pkg, ModuleGen moduleGen, List<FnImpl> fnImpls) throws Exception {
+        for (FnImpl fnImpl : fnImpls) {
+            FnImplGenerator fnImplGenerator = new FnImplGenerator(this.messager, this.elementUtils, fnImpl, moduleGen);
+            fnImplGenerator.generate(this.filer);
         }
         // generate verticle
         VerticleGenerator verticleGenerator = new VerticleGenerator(this.messager, this.elementUtils, this.filer);
@@ -36,7 +36,7 @@ public class ModuleGenerator {
 
         // generate MessageConsumerRegister
         MessageConsumerRegisterGenerator messageConsumerRegisterGenerator = new MessageConsumerRegisterGenerator(this.messager, this.elementUtils, this.filer);
-        messageConsumerRegisterGenerator.generate(pkg, moduleGen, fnElements);
+        messageConsumerRegisterGenerator.generate(pkg, moduleGen, fnImpls);
 
     }
 

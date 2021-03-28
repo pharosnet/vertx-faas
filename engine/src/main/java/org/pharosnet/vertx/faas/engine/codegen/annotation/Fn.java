@@ -37,7 +37,6 @@ public @interface Fn {
 
     String[] tags() default {};
 
-    String implementClassFullName();
     String[] beforeHandleInterceptors() default {};
     String[] afterHandleInterceptors() default {};
 

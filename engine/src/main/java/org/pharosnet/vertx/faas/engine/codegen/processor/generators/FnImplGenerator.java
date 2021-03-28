@@ -15,39 +15,41 @@ import javax.tools.Diagnostic;
 import java.util.List;
 import java.util.Set;
 
-public class FnGenerator {
+public class FnImplGenerator {
 
-    public FnGenerator(Messager messager, Elements elementUtils, TypeElement type, ModuleGen moduleGen) throws Exception {
+    public FnImplGenerator(Messager messager, Elements elementUtils, FnImpl fnImpl, ModuleGen moduleGen) throws Exception {
         this.messager = messager;
-        this.load(elementUtils, type, moduleGen);
+        this.fnImpl = fnImpl;
+        this.load(elementUtils, fnImpl, moduleGen);
     }
 
     private final Messager messager;
-
     private FnUnit fnUnit;
     private TypeMirror typeMirror;
+    private FnImpl fnImpl;
 
 
-    public void load(Elements elementUtils, TypeElement typeElement, ModuleGen moduleGen) throws Exception {
-        String pkg = elementUtils.getPackageOf(typeElement).getQualifiedName().toString();
-        String name = typeElement.getSimpleName().toString();
-        this.typeMirror = typeElement.asType();
+    public void load(Elements elementUtils, FnImpl fnImpl, ModuleGen moduleGen) throws Exception {
+        String pkg = elementUtils.getPackageOf(fnImpl.getTypeElement()).getQualifiedName().toString();
+        String name = fnImpl.getInterfaceTypeElement().getSimpleName().toString();
+        this.typeMirror = fnImpl.getTypeElement().asType();
         this.fnUnit = new FnUnit();
         this.fnUnit.setModuleName(moduleGen.name());
-        this.fnUnit.setFn(typeElement.getAnnotation(Fn.class));
+        this.fnUnit.setFn(fnImpl.getFn());
         this.fnUnit.setClassName(name);
         this.fnUnit.setPackageName(pkg);
-        this.scanFnClass(typeElement);
+        this.fnUnit.setImplTypeElement(fnImpl.getTypeElement());
+        this.scanFnClass(fnImpl.getInterfaceTypeElement());
         this.messager.printMessage(Diagnostic.Kind.NOTE, String.format("加载到 %s.%s", pkg, name));
     }
 
     public FnUnit generate(Filer filer) throws Exception {
-        // 生成fn的 service
-        FnServiceGenerator fnServiceGenerator = new FnServiceGenerator(this.messager);
+        // 生成fn的 service impl
+        FnServiceImplGenerator fnServiceGenerator = new FnServiceImplGenerator(this.messager);
         fnServiceGenerator.generate(this.fnUnit, filer, this.typeMirror);
-        // 生成fn的 proxy
-        FnProxyGenerator fnProxyGenerator = new FnProxyGenerator(this.messager);
-        fnProxyGenerator.generate(this.fnUnit, filer, this.typeMirror);
+        // 生成fn的 router
+        FnRouterGenerator fnRouterGenerator = new FnRouterGenerator(this.messager);
+        fnRouterGenerator.generate(this.fnUnit, filer, this.typeMirror);
         return this.fnUnit;
     }
 
