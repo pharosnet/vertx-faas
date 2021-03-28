@@ -11,6 +11,7 @@ import org.pharosnet.vertx.faas.engine.codegen.annotation.QueryParam;
 import org.pharosnet.vertx.faas.engine.codegen.annotation.RequestBody;
 import org.pharosnet.vertx.faas.engine.context.FnContext;
 import org.pharosnet.vertx.faas.engine.http.HttpMethod;
+import org.pharosnet.vertx.faas.engine.http.handler.ResponseContentTypeHeader;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -79,6 +80,7 @@ public class FnRouterGenerator {
         String produces = Optional.of(fnUnit.getFn().produces()).orElse("").trim().toLowerCase();
         if (produces.length() > 0) {
             buildMethod.addCode(String.format("\t\t.produces(\"%s\")\n", produces));
+            buildMethod.addCode(String.format("\t\t.handler($T.create(\"%s\"))\n", produces), ClassName.get(ResponseContentTypeHeader.class));
         }
         String consumes = Optional.of(fnUnit.getFn().consumes()).orElse("").trim().toLowerCase();
         if (consumes.length() > 0) {
