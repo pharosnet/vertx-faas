@@ -7,11 +7,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import io.vertx.core.*;
+import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
+import org.pharosnet.vertx.faas.core.commons.Host;
 import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
 import org.pharosnet.vertx.faas.engine.codegen.annotation.FnDeployment;
 import org.pharosnet.vertx.faas.engine.config.Config;
@@ -150,6 +152,27 @@ public class FaaSEngine {
             System.setProperty("vertx.hazelcast.config", clusterConfigPath);
             ClusterManager clusterManager = new HazelcastClusterManager();
             vertxOptions.setClusterManager(clusterManager);
+            // event bus
+            EventBusOptions eventBusOptions = new EventBusOptions();
+            String clusterEventBusHost = Optional.ofNullable(System.getenv("FAAS_CLUSTER_EB_HOST")).orElse("").trim();
+            if (clusterEventBusHost.isBlank()) {
+                try {
+                    clusterEventBusHost = Host.get().getIp();
+                } catch  (Exception e) {
+                    throw new RuntimeException("can not get cluster event bus public host, please set FAAS_CLUSTER_EB_HOST env value", e);
+                }
+            }
+            eventBusOptions.setClusterPublicHost(clusterEventBusHost);
+            String clusterEventBusPortValue = Optional.ofNullable(System.getenv("FAAS_CLUSTER_EB_PORT")).orElse("").trim();
+            if (!clusterEventBusPortValue.isBlank()) {
+                try {
+                    int clusterEventBusPort = Integer.parseInt(clusterEventBusPortValue);
+                    eventBusOptions.setClusterPublicPort(clusterEventBusPort);
+
+                } catch  (Exception e) {
+                    throw new RuntimeException("can not get cluster event bus public host, please set FAAS_CLUSTER_EB_HOST env value", e);
+                }
+            }
 
             Vertx.clusteredVertx(vertxOptions, r -> {
                 if (r.succeeded()) {

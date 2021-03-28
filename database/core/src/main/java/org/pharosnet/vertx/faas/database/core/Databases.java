@@ -70,6 +70,7 @@ public class Databases {
         this.vertx = vertx;
         this.serviceApplied = false;
         this.transactionCachedTTL = transactionCacheTTL.toMillis();
+        this.hostId = Optional.ofNullable(vertx.getOrCreateContext().deploymentID()).orElse("local").trim();
     }
 
     private final Vertx vertx;

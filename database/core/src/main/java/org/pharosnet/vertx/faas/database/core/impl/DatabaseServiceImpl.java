@@ -32,6 +32,10 @@ public class DatabaseServiceImpl extends AbstractDatabaseService implements Data
 
     @Override
     public void begin(SqlContext context, Handler<AsyncResult<TransactionResult>> handler) {
+        if (!this.databases().isServiceApplied()) {
+            handler.handle(ServiceException.fail(503, "database service is not applied"));
+            return;
+        }
         Latency latency = new Latency();
         latency.start();
         this.getTransactionHostId(context)
@@ -77,6 +81,10 @@ public class DatabaseServiceImpl extends AbstractDatabaseService implements Data
 
     @Override
     public void commit(SqlContext context, Handler<AsyncResult<TransactionResult>> handler) {
+        if (!this.databases().isServiceApplied()) {
+            handler.handle(ServiceException.fail(503, "database service is not applied"));
+            return;
+        }
         this.getTransactionHostId(context)
                 .compose(hostId -> {
                     if (hostId.isEmpty()) {
@@ -130,6 +138,10 @@ public class DatabaseServiceImpl extends AbstractDatabaseService implements Data
 
     @Override
     public void rollback(SqlContext context, Handler<AsyncResult<TransactionResult>> handler) {
+        if (!this.databases().isServiceApplied()) {
+            handler.handle(ServiceException.fail(503, "database service is not applied"));
+            return;
+        }
         this.getTransactionHostId(context)
                 .compose(hostId -> {
                     if (hostId.isEmpty()) {
@@ -217,6 +229,10 @@ public class DatabaseServiceImpl extends AbstractDatabaseService implements Data
 
     @Override
     public void query(SqlContext context, QueryArg arg, Handler<AsyncResult<QueryResult>> handler) {
+        if (!this.databases().isServiceApplied()) {
+            handler.handle(ServiceException.fail(503, "database service is not applied"));
+            return;
+        }
         String sql = Optional.ofNullable(arg.getQuery()).orElse("").trim();
         if (sql.isBlank()) {
             handler.handle(ServiceException.fail(400, "query is empty"));
