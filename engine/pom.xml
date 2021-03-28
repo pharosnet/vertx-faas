@@ -22,7 +22,7 @@
 
         <dependency>
             <groupId>org.pharosnet</groupId>
-            <artifactId>vertx-faas-core</artifactId>
+            <artifactId>vertx-faas-apis</artifactId>
             <version>${faas.version}</version>
         </dependency>
 
@@ -86,6 +86,7 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
             <classifier>processor</classifier>
+            <scope>compile</scope>
         </dependency>
         <!--   <<< vertx  -->
 
@@ -103,43 +104,6 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
         <!--   <<< netty  -->
-
-        <!--   auto-service >>> -->
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>1.0-rc7</version>
-        </dependency>
-        <!--   <<< auto-service  -->
-
-        <!--   javapoet >>> -->
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>javapoet</artifactId>
-            <version>1.13.0</version>
-        </dependency>
-        <!--   <<< javapoet  -->
-
-        <!--   validator >>> -->
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>7.0.1.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-        <!--   <<< validator  -->
-
-        <!--   swagger >>> -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-models</artifactId>
-            <version>2.1.6</version>
-        </dependency>
-        <!--   <<< swagger  -->
 
     </dependencies>
 
@@ -225,7 +189,6 @@
                             <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
                             <compilerArgs>
                                 <arg>-Acodegen.output=${project.basedir}/src/main</arg>
-                                <arg>-J--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
                             </compilerArgs>
                         </configuration>
                     </execution>

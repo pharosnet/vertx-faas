@@ -4,74 +4,103 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.pharosnet</groupId>
-    <artifactId>vertx-faas</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <parent>
+        <groupId>org.pharosnet</groupId>
+        <artifactId>vertx-faas</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
 
+    <artifactId>vertx-faas-codegen</artifactId>
 
-    <name>vertx-faas</name>
+    <name>vertx-faas-codegen</name>
     <url>https://github.com/pharosnet/vertx-faas</url>
 
-    <description>Vertx FaaS</description>
+    <description>Vertx FaaS - CODEGEN</description>
 
-    <modules>
-        <module>core</module>
-        <module>engine</module>
-        <module>database</module>
-        <module>codegen</module>
-        <module>apis</module>
-    </modules>
-
-    <properties>
-        <faas.version>0.0.1-SNAPSHOT</faas.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <vertx.version>4.0.3</vertx.version>
-        <junit-jupiter.version>5.4.0</junit-jupiter.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-stack-depchain</artifactId>
-                <version>${vertx.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
-        <!--   logger >>> -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-        <!--   <<< logger  -->
 
-        <!--   test >>> -->
+        <!-- jackson >>> -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-modules-java8</artifactId>
+            <version>2.11.3</version>
+            <type>pom</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
+            <version>2.11.3</version>
+        </dependency>
+        <!-- <<< jackson -->
+
+        <!--   validator >>> -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>7.0.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+        <!--   <<< validator  -->
+
+        <!--   vertx >>> -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-junit5</artifactId>
-            <scope>test</scope>
+            <artifactId>vertx-core</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-service-proxy</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <classifier>processor</classifier>
+            <scope>compile</scope>
         </dependency>
-        <!--   <<< test  -->
+        <!--   <<< vertx  -->
+
+        <!--   auto-service >>> -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0-rc7</version>
+        </dependency>
+        <!--   <<< auto-service  -->
+
+        <!--   javapoet >>> -->
+        <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>1.13.0</version>
+        </dependency>
+        <!--   <<< javapoet  -->
+
+        <!--   swagger >>> -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>2.1.6</version>
+        </dependency>
+        <!--   <<< swagger  -->
+
     </dependencies>
 
     <build>
@@ -146,32 +175,6 @@
                     <generatedTestSourcesDirectory>src/test/generated</generatedTestSourcesDirectory>
                     <useIncrementalCompilation>false</useIncrementalCompilation>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <configuration>
-                            <annotationProcessors>
-                                <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
-                            </annotationProcessors>
-                            <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
-                            <compilerArgs>
-                                <arg>-Acodegen.output=${project.basedir}/src/main</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <configuration>
-                            <annotationProcessors>
-                                <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
-                            </annotationProcessors>
-                            <generatedTestSourcesDirectory>src/test/generated</generatedTestSourcesDirectory>
-                            <compilerArgs>
-                                <arg>-Acodegen.output=${project.basedir}/src/test</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -213,50 +216,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
         </plugins>
     </build>
 
-    <developers>
-        <developer>
-            <name>wangminxiang</name>
-            <email>wangminxiang@pharosnet.org</email>
-        </developer>
-    </developers>
-
-    <scm>
-        <tag>main</tag>
-        <url>https://github.com/pharosnet/vertx-faas</url>
-        <connection>scm:git:git@github.com:pharosnet/vertx-faas.git</connection>
-        <developerConnection>scm:git:git@github.com:RyougiNevermore/vertx-faas.git</developerConnection>
-    </scm>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-        <license>
-            <name>Eclipse Public License - v 2.0</name>
-            <url>http://www.eclipse.org/legal/epl-v20.html</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 </project>
