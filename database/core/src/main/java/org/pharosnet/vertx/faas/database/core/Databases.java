@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Databases {
@@ -68,16 +69,26 @@ public class Databases {
                 .expireAfterWrite(transactionCacheTTL)
                 .maximumSize(transactionCacheMaxSize)
                 .evictionListener(new TransactionEvictionListener())
-                .build();
-        this.transactionAsyncMap = Caffeine.newBuilder()
-                .expireAfterWrite(transactionCacheTTL)
-                .maximumSize(transactionCacheMaxSize)
-                .evictionListener(new TransactionEvictionListener())
                 .buildAsync();
+
         this.vertx = vertx;
         this.serviceApplied = false;
         this.transactionCachedTTL = transactionCacheTTL.toMillis();
         this.hostId = Optional.ofNullable(vertx.getOrCreateContext().deploymentID()).orElse("local").trim();
+
+        this.transactionsPeriodicId = vertx.setPeriodic(transactionCacheTTL.toMillis(), r -> {
+            if (log.isDebugEnabled()) {
+                log.debug("begin cached transaction timeout status checking");
+            }
+            ConcurrentMap<String, CompletableFuture<CachedTransaction>> map = this.transactions.asMap();
+            map.forEach((k, cf) -> {
+                cf.whenCompleteAsync((v, e) -> {
+                    if (log.isDebugEnabled()) {
+                        log.debug("cached transaction timeout status check {}", v);
+                    }
+                });
+            });
+        });
     }
 
     private final Vertx vertx;
@@ -85,8 +96,9 @@ public class Databases {
     private final boolean mastered;
     private final List<DatabaseNode> nodes;
     private final AtomicInteger index;
-    private final Cache<@NonNull String, @NonNull CachedTransaction> transactions;
-    private final AsyncCache<@NonNull String, @NonNull CachedTransaction> transactionAsyncMap;
+    private final AsyncCache<@NonNull String, @NonNull CachedTransaction> transactions;
+    private final long transactionsPeriodicId;
+
 
     private final long transactionCachedTTL;
 
@@ -97,13 +109,14 @@ public class Databases {
 
     public Future<Optional<CachedTransaction>> getCachedTransaction(String key) {
         Promise<Optional<CachedTransaction>> promise = Promise.promise();
-        CompletableFuture<CachedTransaction> future = this.transactionAsyncMap.getIfPresent(key);
+        CompletableFuture<CachedTransaction> future = this.transactions.getIfPresent(key);
         if (future == null) {
             promise.complete(Optional.empty());
             return promise.future();
         }
         future.whenCompleteAsync(((cachedTransaction, throwable) -> {
             if (throwable != null) {
+                log.error("get cached transaction failed, key = {}", key, throwable);
                 promise.fail(throwable);
                 return;
             }
@@ -114,16 +127,27 @@ public class Databases {
 
     public Future<Void> putCachedTransaction(String key, CachedTransaction cachedTransaction) {
         Promise<Void> promise = Promise.promise();
-        CompletableFuture<CachedTransaction> future = CompletableFuture.supplyAsync(() -> cachedTransaction);
+        CompletableFuture<CachedTransaction> future = CompletableFuture.completedFuture(cachedTransaction);
+        this.transactions.put(key, future);
         future.whenCompleteAsync((_cachedTransaction, throwable) -> {
+            if (throwable != null) {
+                log.error("put cached transaction failed, key = {}", key, throwable);
+                promise.fail(throwable);
+                return;
+            }
             promise.complete();
         });
-        this.transactionAsyncMap.put(key, future);
         return promise.future();
     }
 
     public Future<Void> removeCachedTransaction(String key) {
-        this.transactionAsyncMap.synchronous().invalidate(key);
+        try {
+            this.transactions.synchronous().invalidate(key);
+        } catch (Exception e) {
+            if (log.isWarnEnabled()) {
+                log.warn("remove cached transaction failed, key = {}, but discard", key, e);
+            }
+        }
         return Future.succeededFuture();
     }
 
@@ -223,19 +247,20 @@ public class Databases {
         for (DatabaseNode node : this.nodes) {
             futures.add(node.getPool().close());
         }
-        CompositeFuture.all(futures)
+        this.vertx.cancelTimer(this.transactionsPeriodicId);
+        CompositeFuture.join(futures)
                 .onSuccess(r -> {
-                    this.transactions.cleanUp();
+                    this.transactions.synchronous().cleanUp();
                     promise.complete();
                 })
                 .onFailure(e -> {
-                    this.transactions.cleanUp();
+                    this.transactions.synchronous().cleanUp();
                     promise.fail(e);
                 });
         return promise.future();
     }
 
-    public Cache<@NonNull String, @NonNull CachedTransaction> getTransactions() {
+    public AsyncCache<@NonNull String, @NonNull CachedTransaction> getTransactions() {
         return transactions;
     }
 

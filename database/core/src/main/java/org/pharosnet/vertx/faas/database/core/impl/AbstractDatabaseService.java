@@ -1,6 +1,5 @@
 package org.pharosnet.vertx.faas.database.core.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -8,7 +7,6 @@ import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
 import io.vertx.sqlclient.Transaction;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.pharosnet.vertx.faas.database.api.SqlContext;
 import org.pharosnet.vertx.faas.database.core.CachedTransaction;
 import org.pharosnet.vertx.faas.database.core.Databases;
@@ -26,12 +24,10 @@ public class AbstractDatabaseService {
     public AbstractDatabaseService(Vertx vertx) {
         this.vertx = vertx;
         this.databases = Databases.get(vertx);
-        this.transactions = this.databases.getTransactions();
     }
 
     private final Vertx vertx;
     private final Databases databases;
-    private final Cache<@NonNull String, @NonNull CachedTransaction> transactions;
 
     public Vertx vertx() {
         return vertx;
@@ -74,54 +70,50 @@ public class AbstractDatabaseService {
     protected Future<Void> putHostedTransaction(SqlContext context, CachedTransaction transaction) {
         return this.vertx.sharedData().getAsyncMap(host_key)
                 .compose(map -> map.put(context.getId(), this.databases.getHostId(), this.databases.getTransactionCachedTTL()))
-                .compose(r -> {
-                    this.transactions.put(context.getId(), transaction);
-                    return Future.succeededFuture();
-                });
+                .compose(r -> this.databases().putCachedTransaction(context.getId(), transaction));
     }
 
     protected Future<Void> releaseTransaction(SqlContext context) {
         return this.vertx.sharedData().getAsyncMap(host_key)
                 .compose(map -> {
                     map.remove(context.getId());
-                    try {
-                        this.transactions.invalidate(context.getId());
-                    } catch (Exception ignored) {
-                    }
-                    return Future.succeededFuture();
+                    return this.databases().removeCachedTransaction(context.getId());
                 });
     }
 
-    protected Future<Void> releaseTransactionWithRollback(SqlContext context) {
-        return this.vertx.sharedData().getAsyncMap(host_key)
+    protected void releaseTransactionWithRollback(SqlContext context) {
+        this.vertx.sharedData().getAsyncMap(host_key)
                 .compose(map -> {
                     map.remove(context.getId());
-                    try {
-                        CachedTransaction cachedTransaction = this.transactions.getIfPresent(context.getId());
-                        if (cachedTransaction != null) {
-                            Transaction transaction = cachedTransaction.getTransaction();
-                            if (transaction != null) {
-                                cachedTransaction.getTransaction().rollback()
-                                        .eventually(v -> cachedTransaction.getConnection().close());
-                            }
-                            this.transactions.invalidate(context.getId());
-                        }
-                    } catch (Exception ignored) {
+                    return this.databases().getCachedTransaction(context.getId());
+                })
+                .compose(cachedTransactionOptional -> {
+                    if (cachedTransactionOptional.isEmpty()) {
+                        return Future.succeededFuture();
+                    }
+                    CachedTransaction cachedTransaction = cachedTransactionOptional.get();
+                    Transaction transaction = cachedTransaction.getTransaction();
+                    if (transaction != null) {
+                        return cachedTransaction.getTransaction().rollback()
+                                .eventually(v -> cachedTransaction.getConnection().close());
                     }
                     return Future.succeededFuture();
+                })
+                .compose(v -> this.databases().removeCachedTransaction(context.getId()))
+                .onFailure(e -> {
+                    if (log.isWarnEnabled()) {
+                        log.warn("release cached transaction failed, context id = {}", context.getId(), e);
+                    }
+                })
+                .onSuccess(v -> {
+                    if (log.isDebugEnabled()) {
+                        log.warn("release cached transaction succeed, context id = {}", context.getId());
+                    }
                 });
     }
 
     protected Future<Optional<CachedTransaction>> getTransaction(SqlContext context) {
-        try {
-            CachedTransaction transaction = this.transactions.getIfPresent(context.getId());
-            return Future.succeededFuture(Optional.ofNullable(transaction));
-        } catch (Exception e) {
-            if (log.isWarnEnabled()) {
-                log.warn("get transaction failed by id({})", context.getId());
-            }
-            return Future.succeededFuture(Optional.empty());
-        }
+        return this.databases().getCachedTransaction(context.getId());
     }
 
     private Future<Optional<Record>> fetchHostRecord(String hostId) {

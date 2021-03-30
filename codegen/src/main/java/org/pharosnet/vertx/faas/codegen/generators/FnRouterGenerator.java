@@ -173,6 +173,11 @@ public class FnRouterGenerator {
         handleMethod.addCode("promise.future()\n");
         handleMethod.addCode("\t.onSuccess(r -> {\n");
         handleMethod.addCode("\t\tString result;\n");
+        handleMethod.addCode("\t\tif (r == null) {\n");
+        handleMethod.addCode("\t\t\troutingContext.fail(404, new Exception(\"返回空对象。\"));\n");
+        handleMethod.addCode("\t\t\treturn;\n");
+        handleMethod.addCode("\t\t}\n");
+
         handleMethod.addCode("\t\ttry {\n");
         handleMethod.addCode("\t\t\tresult = r.toJson().encode();\n");
         handleMethod.addCode("\t\t} catch (Throwable throwable) {\n");
