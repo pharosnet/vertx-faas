@@ -1,9 +1,3 @@
 # vertx-faas
 
-todo database http server and eventbus 
-todo codegen, 把接口和实现单独做生成，增加@FnImpl
-
-database tx cache add timer to get keys
-
-todo 
-todo oas gen list<list<?>>
+todo add git info
