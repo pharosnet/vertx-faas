@@ -74,7 +74,7 @@ public class DALMethodGenerator {
         } else {
             methodBuild.addCode("arg.setSlaverMode(false);\n");
         }
-        methodBuild.addCode("arg.setNeedLastInsertedId(false);\n");
+        methodBuild.addCode(String.format("arg.setNeedLastInsertedId(%b);\n", model.getQuery().needLastInsertedId()));
         methodBuild.addCode("\n");
 
 

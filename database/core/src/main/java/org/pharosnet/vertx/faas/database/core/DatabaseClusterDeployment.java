@@ -7,20 +7,19 @@ import io.vertx.core.impl.cpu.CpuCoreSensor;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
+import org.pharosnet.vertx.faas.core.discovery.ServiceDiscoveryProvider;
+
+import java.util.Optional;
 
 public class DatabaseClusterDeployment extends ComponentDeployment {
 
     private DatabaseClusterDeployment() {
-        this(null);
+        this(0);
     }
 
-    public DatabaseClusterDeployment(ServiceDiscovery discovery) {
-        this(discovery, 0);
-    }
 
-    public DatabaseClusterDeployment(ServiceDiscovery discovery, int workers) {
+    public DatabaseClusterDeployment(int workers) {
         super();
-        this.discovery = discovery;
         if (workers < 0) {
             workers = CpuCoreSensor.availableProcessors() * 2;
         }
@@ -28,7 +27,6 @@ public class DatabaseClusterDeployment extends ComponentDeployment {
     }
 
     private final int workers;
-    private final ServiceDiscovery discovery;
 
     @Override
     public Future<String> deploy(Vertx vertx, JsonObject config) {
@@ -37,7 +35,11 @@ public class DatabaseClusterDeployment extends ComponentDeployment {
             deploymentOptions.setWorker(true).setWorkerPoolSize(this.workers);
         }
         deploymentOptions.setConfig(config);
-        return vertx.deployVerticle(new DatabaseVerticle(this.discovery), deploymentOptions);
+        Optional<ServiceDiscovery> discovery = ServiceDiscoveryProvider.get();
+        if (discovery.isEmpty()) {
+            return Future.failedFuture("build clustered database failed, discovery is not defined.");
+        }
+        return vertx.deployVerticle(new DatabaseVerticle(discovery.get()), deploymentOptions);
     }
 
 }

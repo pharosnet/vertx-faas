@@ -10,13 +10,17 @@ import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.pharosnet.vertx.faas.codegen.annotation.FnDeployment;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.pharosnet.vertx.faas.core.commons.Host;
 import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
+import org.pharosnet.vertx.faas.core.discovery.ServiceDiscoveryInstance;
+import org.pharosnet.vertx.faas.core.discovery.ServiceDiscoveryProvider;
 import org.pharosnet.vertx.faas.engine.config.Config;
 import org.pharosnet.vertx.faas.engine.http.HttpDeployment;
+import org.pharosnet.vertx.faas.engine.http.HttpServerHooker;
 import org.pharosnet.vertx.faas.engine.http.router.AbstractHttpRouter;
 import org.pharosnet.vertx.faas.engine.http.router.DefaultHttpRouter;
 import org.pharosnet.vertx.faas.engine.validator.Validators;
@@ -40,6 +44,8 @@ public class FaaSEngine {
     private String basePackage;
 
     private List<ComponentDeployment> deployments;
+    private ServiceDiscoveryProvider discoveryProvider;
+    private HttpServerHooker hooker;
 
     private Vertx vertx() {
         return vertx;
@@ -157,7 +163,7 @@ public class FaaSEngine {
             if (clusterEventBusHost.isBlank()) {
                 try {
                     clusterEventBusHost = Host.get().getIp();
-                } catch  (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException("can not get cluster event bus public host, please set FAAS_CLUSTER_EB_HOST env value", e);
                 }
             }
@@ -168,7 +174,7 @@ public class FaaSEngine {
                     int clusterEventBusPort = Integer.parseInt(clusterEventBusPortValue);
                     eventBusOptions.setClusterPublicPort(clusterEventBusPort);
 
-                } catch  (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException("can not get cluster event bus public host, please set FAAS_CLUSTER_EB_HOST env value", e);
                 }
             }
@@ -203,12 +209,28 @@ public class FaaSEngine {
                     }
                     Config.read(vertx)
                             .compose(config -> {
+                                if (this.discoveryProvider == null) {
+                                    return Future.succeededFuture(config);
+                                }
+                                try {
+                                    ServiceDiscovery discovery = this.discoveryProvider.create(vertx, config.getJsonObject("discovery"));
+                                    if (discovery == null) {
+                                        throw new Exception("create service discovery failed, it has not be defined.");
+                                    }
+                                    ServiceDiscoveryInstance.set(discovery);
+                                } catch (Exception e) {
+                                    log.error("create service discovery failed.", e);
+                                    return Future.failedFuture(e);
+                                }
+                                return Future.succeededFuture(config);
+                            })
+                            .compose(config -> {
                                 config.put("_faasOptions", new JsonObject().put("basePackage", this.basePackage));
                                 List<Future> deploymentFutures = new ArrayList<>();
                                 if (this.deployments != null && !this.deployments.isEmpty()) {
                                     deployments.forEach(deployment -> deploymentFutures.add(deployment.deploy(this.vertx, config)));
                                 }
-                                deploymentFutures.add(new HttpDeployment(router).deploy(this.vertx, config));
+                                deploymentFutures.add(new HttpDeployment(router, this.hooker).deploy(this.vertx, config));
                                 return CompositeFuture.join(deploymentFutures);
                             })
                             .onSuccess(compositeFuture -> {
@@ -231,6 +253,14 @@ public class FaaSEngine {
                 });
 
         return promise.future();
+    }
+
+    public void setDiscoveryProvider(ServiceDiscoveryProvider discoveryProvider) {
+        this.discoveryProvider = discoveryProvider;
+    }
+
+    public void setHooker(HttpServerHooker hooker) {
+        this.hooker = hooker;
     }
 
 }

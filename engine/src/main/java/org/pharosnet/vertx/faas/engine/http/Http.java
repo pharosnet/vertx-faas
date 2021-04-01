@@ -34,13 +34,30 @@ public class Http {
     private HttpServer server;
     private final String basePackage;
 
-    public Future<Void> run(AbstractHttpRouter routerbuilder) {
-        Promise<Void> promise = Promise.promise();
+    public Future<HttpInfo> run(AbstractHttpRouter routerBuilder) {
+        Promise<HttpInfo> promise = Promise.promise();
 
-        if (routerbuilder == null) {
+        if (routerBuilder == null) {
             promise.fail(new IllegalArgumentException("faas startup failed, routerBuilder is null"));
             return promise.future();
         }
+
+        String name = Optional.ofNullable(config.getName()).orElse("").trim();
+        if (name.isBlank()) {
+            promise.fail(new IllegalArgumentException("faas startup failed, name in config is not defined."));
+            return promise.future();
+        }
+        String rootPath = Optional.ofNullable(config.getRootPath()).orElse("/").trim();
+        if (!rootPath.startsWith("/")) {
+            promise.fail(new IllegalArgumentException("faas startup failed, rootPath in config is not start with '/'."));
+            return promise.future();
+        }
+        int port = Optional.ofNullable(config.getPort()).orElse(0);
+        if (port < 1) {
+            promise.fail(new IllegalArgumentException("faas startup failed, port in config is not defined."));
+            return promise.future();
+        }
+
 
         HttpServerOptions options = new HttpServerOptions();
 
@@ -51,7 +68,7 @@ public class Http {
                     .setReusePort(Optional.ofNullable(this.config.getNetNative().getReusePort()).orElse(false));
         }
 
-        options.setPort(this.config.getPort());
+        options.setPort(port);
 
         String host;
         try {
@@ -137,20 +154,22 @@ public class Http {
             }
         }
 
+
         Router router = Router.router(vertx);
-        routerbuilder.buildNotFoundHandler(router);
-        routerbuilder.buildFailureHandler(router);
-        routerbuilder.buildOpenApi(router, basePackage);
+
+        routerBuilder.buildNotFoundHandler(router);
+        routerBuilder.buildFailureHandler(router);
+        routerBuilder.buildOpenApi(router, basePackage);
         if (config.getJwt() != null) {
             try {
-                routerbuilder.buildAuth(vertx, router, config.getJwt());
+                routerBuilder.buildAuth(vertx, router, config.getJwt());
             } catch (Exception e) {
                 log.error("创建JWT路由失败", e);
                 promise.fail("创建JWT路由失败");
                 return promise.future();
             }
         }
-        routerbuilder.build(vertx, router);
+        routerBuilder.build(vertx, router);
         FnRouterBuilder fnRouterBuilder = new FnRouterBuilder(basePackage);
         fnRouterBuilder.build(vertx, router);
 
@@ -164,8 +183,7 @@ public class Http {
                 log.debug("启动 HTTP 服务成功, {}:{}", options.getHost(), options.getPort());
             }
             this.server = r.result();
-            // todo discovery
-            promise.complete();
+            promise.complete(new HttpInfo(host, port, name, rootPath));
         });
 
         return promise.future();

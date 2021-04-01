@@ -23,6 +23,8 @@ public class HttpConfig {
         return jsonObject;
     }
 
+    private String name;
+    private String rootPath;
     private Integer port;
 
     private Boolean enableLogActivity;
@@ -37,7 +39,21 @@ public class HttpConfig {
 
     private JwtConfig jwt;
 
-    private HttpDiscoveryConfig discovery;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getRootPath() {
+        return rootPath;
+    }
+
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
 
     public Integer getPort() {
         return port;
@@ -85,14 +101,6 @@ public class HttpConfig {
 
     public void setNetNative(NetNativeConfig netNative) {
         this.netNative = netNative;
-    }
-
-    public HttpDiscoveryConfig getDiscovery() {
-        return discovery;
-    }
-
-    public void setDiscovery(HttpDiscoveryConfig discovery) {
-        this.discovery = discovery;
     }
 
     public JwtConfig getJwt() {

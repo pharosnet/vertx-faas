@@ -12,6 +12,7 @@ public class ColumnModel {
     private ClassName className;
     private Column column;
     private ColumnKind kind;
+    private boolean needLastInsertedId;
 
     public String getFieldName() {
         return fieldName;
@@ -43,5 +44,13 @@ public class ColumnModel {
 
     public void setKind(ColumnKind kind) {
         this.kind = kind;
+    }
+
+    public boolean isNeedLastInsertedId() {
+        return needLastInsertedId;
+    }
+
+    public void setNeedLastInsertedId(boolean needLastInsertedId) {
+        this.needLastInsertedId = needLastInsertedId;
     }
 }

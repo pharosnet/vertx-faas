@@ -49,8 +49,13 @@ public class TableModel {
                 continue;
             }
             ColumnKind columnKind;
+            boolean needLastInsertedId = false;
             if (fieldElement.getAnnotation(Id.class) != null) {
+                Id id = fieldElement.getAnnotation(Id.class);
+                needLastInsertedId = id.needLastInsertedId();
                 columnKind = ColumnKind.ID;
+                this.needLastInsertedId = needLastInsertedId;
+
             } else if (fieldElement.getAnnotation(CreateBY.class) != null) {
                 columnKind = ColumnKind.CREATE_BY;
             } else if (fieldElement.getAnnotation(CreateAT.class) != null) {
@@ -75,6 +80,7 @@ public class TableModel {
             columnModel.setClassName(fieldClassName);
             columnModel.setColumn(column);
             columnModel.setKind(columnKind);
+            columnModel.setNeedLastInsertedId(needLastInsertedId);
 
             columnModels.add(columnModel);
         }
@@ -87,6 +93,8 @@ public class TableModel {
     private List<ColumnModel> columnModels;
 
     private ClassName mapperClassName;
+
+    private boolean needLastInsertedId;
 
     public ClassName getClassName() {
         return className;
@@ -118,5 +126,13 @@ public class TableModel {
 
     public void setMapperClassName(ClassName mapperClassName) {
         this.mapperClassName = mapperClassName;
+    }
+
+    public boolean isNeedLastInsertedId() {
+        return needLastInsertedId;
+    }
+
+    public void setNeedLastInsertedId(boolean needLastInsertedId) {
+        this.needLastInsertedId = needLastInsertedId;
     }
 }

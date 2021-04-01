@@ -34,6 +34,10 @@
             <classifier>processor</classifier>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-service-discovery</artifactId>
+        </dependency>
         <!--   <<< vertx  -->
 
     </dependencies>

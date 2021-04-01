@@ -102,7 +102,7 @@ public class DALInsertGenerator {
                 .addCode("arg.setArgs(args);\n")
                 .addCode("arg.setBatch(false);\n")
                 .addCode("arg.setSlaverMode(false);\n")
-                .addCode("arg.setNeedLastInsertedId(false);\n");
+                .addCode(String.format("arg.setNeedLastInsertedId(%b);\n", dalModel.getTableModel().isNeedLastInsertedId()));
 
         methodBuild.addCode("this.service.query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
@@ -178,7 +178,7 @@ public class DALInsertGenerator {
                 .addCode("arg.setArgs(args);\n")
                 .addCode("arg.setBatch(true);\n")
                 .addCode("arg.setSlaverMode(false);\n")
-                .addCode("arg.setNeedLastInsertedId(false);\n");
+                .addCode(String.format("arg.setNeedLastInsertedId(%b);\n", dalModel.getTableModel().isNeedLastInsertedId()));
 
         methodBuild.addCode("this.service.query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
