@@ -3,19 +3,24 @@ package org.pharosnet.vertx.faas.engine.http;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpVersion;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.*;
 import io.vertx.ext.web.Router;
 import org.pharosnet.vertx.faas.core.commons.Host;
 import org.pharosnet.vertx.faas.engine.http.config.HttpConfig;
 import org.pharosnet.vertx.faas.engine.http.config.SSLConfig;
 import org.pharosnet.vertx.faas.engine.http.router.AbstractHttpRouter;
+import org.pharosnet.vertx.faas.engine.http.router.AuthRouterBuild;
 import org.pharosnet.vertx.faas.engine.http.router.FnRouterBuilder;
+import org.pharosnet.vertx.faas.engine.http.router.OpenApiRouterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,20 +28,23 @@ public class Http {
 
     private static final Logger log = LoggerFactory.getLogger(Http.class);
 
-    public Http(Vertx vertx, String basePackage, HttpConfig config) {
+    public Http(Vertx vertx, String basePackage, JsonObject config) {
         this.vertx = vertx;
         this.basePackage = basePackage;
         this.config = config;
+        this.consumers = new ArrayList<>();
     }
 
     private final Vertx vertx;
-    private final HttpConfig config;
+    private final JsonObject config;
     private HttpServer server;
     private final String basePackage;
+    private final List<MessageConsumer<JsonObject>> consumers;
 
     public Future<HttpInfo> run(AbstractHttpRouter routerBuilder) {
         Promise<HttpInfo> promise = Promise.promise();
 
+        HttpConfig config = new HttpConfig(this.config.getJsonObject("http"));
         if (routerBuilder == null) {
             promise.fail(new IllegalArgumentException("faas startup failed, routerBuilder is null"));
             return promise.future();
@@ -61,11 +69,11 @@ public class Http {
 
         HttpServerOptions options = new HttpServerOptions();
 
-        if (vertx.isNativeTransportEnabled() && this.config.getNetNative() != null) {
-            options.setTcpFastOpen(Optional.ofNullable(this.config.getNetNative().getTcpFastOpen()).orElse(false))
-                    .setTcpCork(Optional.ofNullable(this.config.getNetNative().getTcpCork()).orElse(false))
-                    .setTcpQuickAck(Optional.ofNullable(this.config.getNetNative().getTcpQuickAck()).orElse(false))
-                    .setReusePort(Optional.ofNullable(this.config.getNetNative().getReusePort()).orElse(false));
+        if (vertx.isNativeTransportEnabled() && config.getNetNative() != null) {
+            options.setTcpFastOpen(Optional.ofNullable(config.getNetNative().getTcpFastOpen()).orElse(false))
+                    .setTcpCork(Optional.ofNullable(config.getNetNative().getTcpCork()).orElse(false))
+                    .setTcpQuickAck(Optional.ofNullable(config.getNetNative().getTcpQuickAck()).orElse(false))
+                    .setReusePort(Optional.ofNullable(config.getNetNative().getReusePort()).orElse(false));
         }
 
         options.setPort(port);
@@ -79,20 +87,20 @@ public class Http {
         }
         options.setHost(host);
 
-        options.setLogActivity(Optional.ofNullable(this.config.getEnableLogActivity()).orElse(false));
-        options.setAcceptBacklog(Optional.ofNullable(this.config.getBacklog()).orElse(NetServerOptions.DEFAULT_ACCEPT_BACKLOG));
-        if (this.config.getCompress() != null) {
+        options.setLogActivity(Optional.ofNullable(config.getEnableLogActivity()).orElse(false));
+        options.setAcceptBacklog(Optional.ofNullable(config.getBacklog()).orElse(NetServerOptions.DEFAULT_ACCEPT_BACKLOG));
+        if (config.getCompress() != null) {
             if (log.isDebugEnabled()) {
                 log.debug("set compress options. noted!");
             }
-            options.setCompressionSupported(Optional.ofNullable(this.config.getCompress().getCompression()).orElse(false));
-            options.setDecompressionSupported(Optional.ofNullable(this.config.getCompress().getDecompression()).orElse(false));
+            options.setCompressionSupported(Optional.ofNullable(config.getCompress().getCompression()).orElse(false));
+            options.setDecompressionSupported(Optional.ofNullable(config.getCompress().getDecompression()).orElse(false));
         }
-        if (this.config.getSsl() != null) {
+        if (config.getSsl() != null) {
             if (log.isDebugEnabled()) {
                 log.debug("set ssl options. noted!");
             }
-            SSLConfig sslConfig = this.config.getSsl();
+            SSLConfig sslConfig = config.getSsl();
 
             boolean hasKey = false;
             String keystore = Optional.ofNullable(sslConfig.getKeystore()).orElse("").trim();
@@ -156,22 +164,23 @@ public class Http {
 
 
         Router router = Router.router(vertx);
-
         routerBuilder.buildNotFoundHandler(router);
         routerBuilder.buildFailureHandler(router);
-        routerBuilder.buildOpenApi(router, basePackage);
-        if (config.getJwt() != null) {
-            try {
-                routerBuilder.buildAuth(vertx, router, config.getJwt());
-            } catch (Exception e) {
-                log.error("创建JWT路由失败", e);
-                promise.fail("创建JWT路由失败");
-                return promise.future();
-            }
-        }
         routerBuilder.build(vertx, router);
+        try {
+            MessageConsumer<JsonObject> consumer = new AuthRouterBuild().build(vertx, this.config, router, routerBuilder.auth());
+            if (consumer != null) {
+                this.consumers.add(consumer);
+            }
+        } catch (Exception e) {
+            promise.fail(e);
+            return promise.future();
+        }
+
         FnRouterBuilder fnRouterBuilder = new FnRouterBuilder(basePackage);
         fnRouterBuilder.build(vertx, router);
+        OpenApiRouterBuilder openApiRouterBuilder = new OpenApiRouterBuilder(basePackage);
+        openApiRouterBuilder.build(router);
 
         vertx.createHttpServer(options).requestHandler(router).listen(r -> {
             if (r.failed()) {
@@ -192,6 +201,7 @@ public class Http {
     public Future<Void> close() {
         Promise<Void> promise = Promise.promise();
         this.server.close(promise);
+        this.consumers.forEach(MessageConsumer::unregister);
         return promise.future();
     }
 

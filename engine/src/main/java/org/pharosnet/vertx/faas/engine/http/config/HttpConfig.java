@@ -37,8 +37,6 @@ public class HttpConfig {
 
     private NetNativeConfig netNative;
 
-    private JwtConfig jwt;
-
     public String getName() {
         return name;
     }
@@ -101,14 +99,6 @@ public class HttpConfig {
 
     public void setNetNative(NetNativeConfig netNative) {
         this.netNative = netNative;
-    }
-
-    public JwtConfig getJwt() {
-        return jwt;
-    }
-
-    public void setJwt(JwtConfig jwt) {
-        this.jwt = jwt;
     }
 
 }

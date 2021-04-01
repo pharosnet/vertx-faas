@@ -1,4 +1,4 @@
-package org.pharosnet.vertx.faas.engine.http.config;
+package org.pharosnet.vertx.faas.engine.http.auth.jwt;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
@@ -7,8 +7,8 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Converter and mapper for {@link org.pharosnet.vertx.faas.engine.http.config.JwtConfig}.
- * NOTE: This class has been automatically generated from the {@link org.pharosnet.vertx.faas.engine.http.config.JwtConfig} original class using Vert.x codegen.
+ * Converter and mapper for {@link org.pharosnet.vertx.faas.engine.http.auth.jwt.JwtConfig}.
+ * NOTE: This class has been automatically generated from the {@link org.pharosnet.vertx.faas.engine.http.auth.jwt.JwtConfig} original class using Vert.x codegen.
  */
 public class JwtConfigConverter {
 

@@ -31,11 +31,6 @@ public class HttpConfigConverter {
             obj.setEnableLogActivity((Boolean)member.getValue());
           }
           break;
-        case "jwt":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setJwt(new org.pharosnet.vertx.faas.engine.http.config.JwtConfig((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
         case "name":
           if (member.getValue() instanceof String) {
             obj.setName((String)member.getValue());
@@ -78,9 +73,6 @@ public class HttpConfigConverter {
     }
     if (obj.getEnableLogActivity() != null) {
       json.put("enableLogActivity", obj.getEnableLogActivity());
-    }
-    if (obj.getJwt() != null) {
-      json.put("jwt", obj.getJwt().toJson());
     }
     if (obj.getName() != null) {
       json.put("name", obj.getName());

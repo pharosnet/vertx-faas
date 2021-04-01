@@ -1,4 +1,4 @@
-package org.pharosnet.vertx.faas.engine.http.config;
+package org.pharosnet.vertx.faas.engine.http.auth.jwt;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
