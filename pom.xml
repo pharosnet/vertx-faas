@@ -18,6 +18,9 @@
     <modules>
         <module>core</module>
         <module>engine</module>
+        <module>database</module>
+        <module>codegen</module>
+        <module>apis</module>
     </modules>
 
     <properties>

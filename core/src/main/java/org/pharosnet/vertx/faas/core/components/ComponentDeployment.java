@@ -9,20 +9,6 @@ public abstract class ComponentDeployment {
     public ComponentDeployment() {
     }
 
-    public ComponentDeployment(MessageConsumerRegister register) {
-        this.register = register;
-    }
-
-    private MessageConsumerRegister register;
-
     public abstract Future<String> deploy(Vertx vertx, JsonObject config);
-
-    public MessageConsumerRegister getRegister() {
-        return register;
-    }
-
-    public void setRegister(MessageConsumerRegister register) {
-        this.register = register;
-    }
 
 }

@@ -68,6 +68,7 @@ public class FaaSEngineCloseHooker extends Thread {
                 } else {
                     this.wait();
                 }
+                this.vertx.close();
             } catch (InterruptedException e) {
                 log.error("等待服务卸载失败", e);
                 this.callbackPromise.fail(new Exception("等待服务卸载失败，超时！"));

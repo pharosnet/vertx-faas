@@ -12,7 +12,7 @@
 
     <artifactId>vertx-faas-core</artifactId>
 
-    <name>faas-core</name>
+    <name>vertx-faas-core</name>
     <url>https://github.com/pharosnet/vertx-faas</url>
     <description>Vertx FaaS - CORE</description>
 
@@ -32,6 +32,11 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
             <classifier>processor</classifier>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-service-discovery</artifactId>
         </dependency>
         <!--   <<< vertx  -->
 

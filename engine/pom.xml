@@ -12,7 +12,7 @@
 
     <artifactId>vertx-faas-engine</artifactId>
 
-    <name>faas-engine</name>
+    <name>vertx-faas-engine</name>
     <url>https://github.com/pharosnet/vertx-faas</url>
 
     <description>Vertx FaaS - ENGINE</description>
@@ -22,7 +22,7 @@
 
         <dependency>
             <groupId>org.pharosnet</groupId>
-            <artifactId>vertx-faas-core</artifactId>
+            <artifactId>vertx-faas-apis</artifactId>
             <version>${faas.version}</version>
         </dependency>
 
@@ -50,38 +50,6 @@
             <version>2.11.3</version>
         </dependency>
         <!-- <<< jackson -->
-
-        <!--   logger >>> -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.2.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback.contrib</groupId>
-            <artifactId>logback-jackson</artifactId>
-            <version>0.1.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-            <version>6.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <version>3.1.2</version>
-        </dependency>
-        <!--   <<< logger  -->
 
         <!--   vertx >>> -->
         <dependency>
@@ -118,6 +86,7 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
             <classifier>processor</classifier>
+            <scope>compile</scope>
         </dependency>
         <!--   <<< vertx  -->
 
@@ -136,22 +105,6 @@
         </dependency>
         <!--   <<< netty  -->
 
-        <!--   auto-service >>> -->
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>1.0-rc7</version>
-        </dependency>
-        <!--   <<< auto-service  -->
-
-        <!--   javapoet >>> -->
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>javapoet</artifactId>
-            <version>1.13.0</version>
-        </dependency>
-        <!--   <<< javapoet  -->
-
         <!--   validator >>> -->
         <dependency>
             <groupId>org.hibernate.validator</groupId>
@@ -164,14 +117,6 @@
             <version>4.0.0</version>
         </dependency>
         <!--   <<< validator  -->
-
-        <!--   swagger >>> -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-models</artifactId>
-            <version>2.1.6</version>
-        </dependency>
-        <!--   <<< swagger  -->
 
     </dependencies>
 
