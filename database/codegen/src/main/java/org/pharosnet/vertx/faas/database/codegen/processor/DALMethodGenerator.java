@@ -28,6 +28,7 @@ public class DALMethodGenerator {
 
     public MethodSpec generateMethod(DALMethodModel model) {
         MethodSpec.Builder methodBuild = MethodSpec.methodBuilder(model.getName());
+        methodBuild.addModifiers(Modifier.PUBLIC);
         methodBuild.returns(model.getReturnClassName());
         for (DALMethodParamModel param : model.getParamModels()) {
             methodBuild.addParameter(param.getParamClassName(), param.getParamName());
@@ -78,13 +79,13 @@ public class DALMethodGenerator {
         methodBuild.addCode("\n");
 
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode(String.format("\t\tlog.error(\"%s failed\", r.cause());\n", model.getName()));
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode(String.format("\t\tlog.debug(\"%s succeed, latency = {}\", queryResult.getLatency());\n", model.getName()));
         methodBuild.addCode("\t}\n");
@@ -109,9 +110,9 @@ public class DALMethodGenerator {
                     )
             );
             methodBuild.addCode("\tif (queryResult.getRows() != null && queryResult.getRows().size() > 0) {\n");
-            methodBuild.addCode("\t\tvalues = new $T(queryResult.getRows().size());\n", ParameterizedTypeName.get(
+            methodBuild.addCode("\t\tvalues = new $T<>(queryResult.getRows().size());\n",
                     ClassName.get(ArrayList.class)
-            ));
+            );
             methodBuild.addCode(String.format("\t\t%sMapper mapper = new %sMapper();\n",
                     ((ClassName) model.getReturnElementClassName()).simpleName(),
                     ((ClassName) model.getReturnElementClassName()).simpleName()

@@ -105,13 +105,13 @@ public class DALGetGenerator {
                 .addCode("arg.setNeedLastInsertedId(false);\n");
 
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"get failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"get succeed, latency = {}\", queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -126,8 +126,6 @@ public class DALGetGenerator {
         methodBuild.addCode("return promise.future();\n");
 
 
-        methodBuild.addCode("});\n");
-        methodBuild.addCode("return promise.future();\n");
         return methodBuild;
     }
 
@@ -153,13 +151,19 @@ public class DALGetGenerator {
         MethodSpec.Builder methodBuild = MethodSpec.methodBuilder("get")
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("org.pharosnet.vertx.faas.database.api", "SqlContext"), "context")
-                .addParameter(ParameterizedTypeName.get(ClassName.get(Stream.class), dalModel.getIdClassName()), "ids")
+                .addParameter(ParameterizedTypeName.get(
+                        ClassName.get(Stream.class),
+                        dalModel.getIdClassName()
+                ), "ids")
                 .returns(
                         ParameterizedTypeName.get(
                                 ClassName.get(Future.class),
                                 ParameterizedTypeName.get(
-                                        ClassName.get(Stream.class),
-                                        dalModel.getTableClassName()
+                                        ClassName.get(Optional.class),
+                                        ParameterizedTypeName.get(
+                                                ClassName.get(Stream.class),
+                                                dalModel.getTableClassName()
+                                        )
                                 )
                         )
                 );
@@ -203,13 +207,13 @@ public class DALGetGenerator {
         methodBuild.addCode("arg.setNeedLastInsertedId(false);\n");
         methodBuild.addCode("\n");
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"get batch failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"get batch succeed, latency = {}\", queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -222,9 +226,9 @@ public class DALGetGenerator {
                 )
         );
         methodBuild.addCode("\tif (queryResult.getRows() != null && queryResult.getRows().size() > 0) {\n");
-        methodBuild.addCode("\t\tvalues = new $T(queryResult.getRows().size());\n", ParameterizedTypeName.get(
+        methodBuild.addCode("\t\tvalues = new $T<>(queryResult.getRows().size());\n",
                 ClassName.get(ArrayList.class)
-        ));
+        );
         methodBuild.addCode("\t\t$T mapper = new $T();\n",
                 dalModel.getTableMapperClassName(),
                 dalModel.getTableMapperClassName()

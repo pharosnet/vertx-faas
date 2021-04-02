@@ -3,11 +3,11 @@ package org.pharosnet.vertx.faas.codegen;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import io.vertx.codegen.annotations.DataObject;
-import org.pharosnet.vertx.faas.codegen.annotation.EnableOAS;
 import org.pharosnet.vertx.faas.codegen.annotation.Fn;
 import org.pharosnet.vertx.faas.codegen.annotation.FnInterceptor;
 import org.pharosnet.vertx.faas.codegen.annotation.FnModule;
 import org.pharosnet.vertx.faas.codegen.generators.*;
+import org.pharosnet.vertx.faas.core.annotations.EnableOAS;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;

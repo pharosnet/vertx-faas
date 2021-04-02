@@ -1,12 +1,12 @@
 package org.pharosnet.vertx.faas.database.codegen.processor;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import io.vertx.codegen.format.CamelCase;
 import org.pharosnet.vertx.faas.database.codegen.annotations.Query;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,21 @@ import java.util.Map;
 
 public class DALModel {
 
-    public DALModel(Types typeUtils, Map<String, TableModel> tableModelMap, TypeElement element) throws Exception {
+
+    private static List<String> getTypeParameterClass(TypeMirror typeMirror) {
+        List<String> names = new ArrayList<>();
+        String value = typeMirror.toString();
+        int posBeg = value.indexOf("<");
+        int posEnd = value.indexOf(">");
+        value = value.substring(posBeg + 1, posEnd);
+        String[] items = value.split(",");
+        for (String item : items) {
+            names.add(item.trim());
+        }
+        return names;
+    }
+
+    public DALModel(Types typeUtils, Elements elementUtils, Map<String, TableModel> tableModelMap, TypeElement element) throws Exception {
         this.className = ClassName.get(element);
         this.implClassName = ClassName.get(this.className.packageName(), CamelCase.INSTANCE.format(List.of(this.className.simpleName(), "Impl")));
 
@@ -22,23 +36,29 @@ public class DALModel {
         for (TypeMirror interface_ : interfaces) {
             boolean isAbstractDAL = false;
             boolean isAbstractVAL = false;
-            Element interfaceTypeElement = typeUtils.asElement(interface_);
-            if (interfaceTypeElement instanceof TypeElement) {
-                ClassName interfaceClassName = ClassName.get((TypeElement) interfaceTypeElement);
+
+            Element interfaceElement = typeUtils.asElement(interface_);
+            if (interfaceElement instanceof TypeElement) {
+                TypeElement interfaceTypeElement = (TypeElement) interfaceElement;
+                ClassName interfaceClassName = ClassName.get(interfaceTypeElement);
                 isAbstractDAL = interfaceClassName.packageName().equals("org.pharosnet.vertx.faas.database.api")
                         && interfaceClassName.simpleName().equals("AbstractDAL");
                 isAbstractVAL = interfaceClassName.packageName().equals("org.pharosnet.vertx.faas.database.api")
                         && interfaceClassName.simpleName().equals("AbstractVAL");
                 if (isAbstractDAL) {
-                    List<? extends TypeParameterElement> typeParameters = ((TypeElement) interfaceTypeElement).getTypeParameters();
+
+
+                    List<? extends TypeParameterElement> typeParameters = interfaceTypeElement.getTypeParameters();
                     if (typeParameters == null || typeParameters.isEmpty()) {
                         throw new Exception(String.format("%s.%s 的AbstractDAL没有设置泛型.", this.className.packageName(), this.className.simpleName()));
                     }
                     if (typeParameters.size() != 2) {
                         throw new Exception(String.format("%s.%s 的AbstractDAL泛型设置错误，只能两个.", this.className.packageName(), this.className.simpleName()));
                     }
-                    TypeParameterElement tableTypeParam = typeParameters.get(0);
-                    TypeElement tableTypeElement = (TypeElement) typeUtils.asElement(tableTypeParam.asType());
+                    List<String> typeParameterClasses = getTypeParameterClass(interface_);
+
+
+                    TypeElement tableTypeElement = elementUtils.getTypeElement(typeParameterClasses.get(0));
                     this.tableClassName = ClassName.get(tableTypeElement);
                     String tableModelKey = String.format("%s.%s", this.tableClassName.packageName(), this.tableClassName.simpleName());
                     if (!tableModelMap.containsKey(tableModelKey)) {
@@ -52,18 +72,13 @@ public class DALModel {
                     }
 
                     // id
-                    TypeParameterElement idTypeParam = typeParameters.get(1);
-                    TypeName idTypeName = TypeName.get(idTypeParam.asType());
-                    if (idTypeName.toString().contains("Integer")) {
-                        this.idTypeString = false;
-                    } else if (idTypeName.toString().contains("Double")) {
-                        this.idTypeString = false;
-                    } else if (idTypeName.toString().contains("Long")) {
-                        this.idTypeString = false;
-                    } else {
+                    ClassName idTypeName = ClassName.get(elementUtils.getTypeElement(typeParameterClasses.get(1)));
+                    if (idTypeName.toString().contains("String")) {
                         this.idTypeString = true;
+                    } else {
+                        this.idTypeString = false;
                     }
-                    this.idClassName = (ClassName) idTypeName;
+                    this.idClassName = idTypeName;
                 }
             }
             this.view = isAbstractVAL;
@@ -91,8 +106,8 @@ public class DALModel {
                 if (methodElement.getAnnotation(Query.class) == null) {
                     continue;
                 }
-                methodPos ++;
-                DALMethodModel methodModel = new DALMethodModel(methodElement, methodPos);
+                methodPos++;
+                DALMethodModel methodModel = new DALMethodModel(typeUtils, methodElement, methodPos);
                 this.methodModels.add(methodModel);
             }
         }

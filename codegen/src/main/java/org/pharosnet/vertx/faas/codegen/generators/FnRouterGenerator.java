@@ -236,7 +236,7 @@ public class FnRouterGenerator {
         // class
         TypeSpec typeBuilder = TypeSpec.classBuilder(fnRouterClassName)
                 .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(FnRouter.class)
+                .addAnnotation(ClassName.get("org.pharosnet.vertx.faas.core.annotations", "FnRouter"))
                 .addField(staticLogField.build())
                 .addMethod(constructor.build())
                 .addField(vertxField.build())

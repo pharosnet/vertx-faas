@@ -1,8 +1,9 @@
-package org.pharosnet.vertx.faas.codegen.annotation;
+package org.pharosnet.vertx.faas.core.annotations;
 
-import org.pharosnet.vertx.faas.codegen.annotation.oas.Info;
-import org.pharosnet.vertx.faas.codegen.annotation.oas.Server;
-import org.pharosnet.vertx.faas.codegen.annotation.oas.Tag;
+
+import org.pharosnet.vertx.faas.core.annotations.oas.Info;
+import org.pharosnet.vertx.faas.core.annotations.oas.Server;
+import org.pharosnet.vertx.faas.core.annotations.oas.Tag;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

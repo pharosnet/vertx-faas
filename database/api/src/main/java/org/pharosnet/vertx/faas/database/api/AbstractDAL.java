@@ -23,10 +23,10 @@ public interface AbstractDAL<R, ID> {
     Future<Optional<R>> insert(SqlContext context, R row);
     Future<Optional<Stream<R>>> insert(SqlContext context, Stream<R> rows);
     Future<Optional<R>> update(SqlContext context, R row);
-    Future<Optional<Stream<R>>> update(SqlContext context, List<R> rows);
+    Future<Optional<Stream<R>>> update(SqlContext context, Stream<R> rows);
     Future<Optional<R>> delete(SqlContext context, R row);
-    Future<Optional<Stream<R>>> delete(SqlContext context, List<R> rows);
+    Future<Optional<Stream<R>>> delete(SqlContext context, Stream<R> rows);
     Future<Optional<R>> deleteForce(SqlContext context, R row);
-    Future<Optional<Stream<R>>> deleteForce(SqlContext context, List<R> rows);
+    Future<Optional<Stream<R>>> deleteForce(SqlContext context, Stream<R> rows);
 
 }

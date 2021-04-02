@@ -25,12 +25,7 @@
             <artifactId>vertx-faas-core</artifactId>
             <version>${faas.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.pharosnet</groupId>
-            <artifactId>vertx-faas-codegen</artifactId>
-            <version>${faas.version}</version>
-            <scope>compile</scope>
-        </dependency>
+
         <!--   vertx >>> -->
         <dependency>
             <groupId>io.vertx</groupId>

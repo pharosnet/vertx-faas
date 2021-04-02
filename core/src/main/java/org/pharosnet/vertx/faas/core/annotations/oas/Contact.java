@@ -1,4 +1,4 @@
-package org.pharosnet.vertx.faas.codegen.annotation;
+package org.pharosnet.vertx.faas.core.annotations.oas;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,6 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface FnDeployment {
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Contact {
+
+    String name();
+    String url();
+    String email();
+
 }

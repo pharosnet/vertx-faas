@@ -1,4 +1,4 @@
-package org.pharosnet.vertx.faas.codegen.annotation.oas;
+package org.pharosnet.vertx.faas.core.annotations.oas;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

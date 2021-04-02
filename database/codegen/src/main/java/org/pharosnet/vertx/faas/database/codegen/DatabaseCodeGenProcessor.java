@@ -41,13 +41,16 @@ public class DatabaseCodeGenProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         try {
             DatabaseType databaseType = this.getDatabaseType(roundEnv);
+            if (databaseType == null) {
+                return false;
+            }
             Map<String, TableModel> tableModelMap = this.generateTable(roundEnv, databaseType);
             if (tableModelMap.isEmpty()) {
                 throw new Exception("未能发现@Table的类。");
             }
             this.generateDAL(roundEnv, tableModelMap, databaseType);
         } catch (Exception e) {
-            messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+            this.messager.printMessage(Diagnostic.Kind.ERROR, "" + e.getMessage());
             return false;
         }
         return true;
@@ -55,14 +58,16 @@ public class DatabaseCodeGenProcessor extends AbstractProcessor {
 
     private DatabaseType getDatabaseType(RoundEnvironment roundEnv) throws Exception {
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(EnableDAL.class);
-
         if (elements == null || elements.isEmpty()) {
-            throw new Exception("@EnableDAL 未设置.");
+            return null;
         }
         if (elements.size() > 1) {
             throw new Exception("@EnableDAL 只能有一个.");
         }
-        return elements.iterator().next().getAnnotation(EnableDAL.class).type();
+        for (Element element: elements) {
+            return element.getAnnotation(EnableDAL.class).type();
+        }
+        return null;
     }
 
     private Map<String, TableModel> generateTable(RoundEnvironment roundEnv, DatabaseType databaseType) throws Exception {

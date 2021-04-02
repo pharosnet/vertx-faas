@@ -7,18 +7,16 @@ import org.pharosnet.vertx.faas.database.codegen.annotations.Query;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.lang.model.util.Types;
+import java.util.*;
 
 public class DALMethodModel {
 
-    public DALMethodModel(ExecutableElement methodElement, int pos) throws Exception {
+    public DALMethodModel(Types types, ExecutableElement methodElement, int pos) throws Exception {
         this.methodElement = methodElement;
         this.name = methodElement.getSimpleName().toString();
         this.query = methodElement.getAnnotation(Query.class);
-        this.sqlFieldName= String.format("_%sSQL%d", this.name, pos);
+        this.sqlFieldName = String.format("_%sSQL%d", this.name, pos);
 
         TypeName returnTypeName = TypeName.get(methodElement.getReturnType());
         if (returnTypeName instanceof ParameterizedTypeName) {
@@ -27,7 +25,7 @@ public class DALMethodModel {
                 throw new Exception(String.format("%s 函数的返回值不是io.vertx.core.Future。", methodElement.getSimpleName()));
             }
             this.returnTopParameterizedTypeName = this.returnClassName.typeArguments.get(0);
-            this.loadReturnElementClassName(this.returnClassName);
+            this.loadReturnElementClassName(this.returnTopParameterizedTypeName);
         } else {
             throw new Exception(String.format("%s 函数的返回值不是io.vertx.core.Future。", methodElement.getSimpleName()));
         }
@@ -47,14 +45,16 @@ public class DALMethodModel {
                     throw new Exception(String.format("%s 函数参数没有@Arg。", methodElement.getSimpleName()));
                 }
             }
-
-            this.paramModels.add(new DALMethodParamModel(parameter));
+            this.paramModels.add(new DALMethodParamModel(types, parameter));
         }
         if (this.paramModels.isEmpty()) {
             throw new Exception(String.format("%s 函数没有参数。", methodElement.getSimpleName()));
         }
-        this.paramArgNames = new ArrayList<>();
+        List<QueryArg> args = new ArrayList<>();
         for (DALMethodParamModel paramModel : this.paramModels) {
+            if (paramModel.getArg() == null) {
+                continue;
+            }
             if (paramModel.getArg().placeholder()) {
                 if (this.placeholders == null) {
                     this.placeholders = new HashMap<>();
@@ -62,7 +62,7 @@ public class DALMethodModel {
                 String placeholderCode;
                 TypeName paramModelTypeName = TypeName.get(paramModel.getParamTypeElement().asType());
                 if (paramModelTypeName instanceof ParameterizedTypeName) {
-                    ParameterizedTypeName paramModelTypeName0 = (ParameterizedTypeName)paramModelTypeName;
+                    ParameterizedTypeName paramModelTypeName0 = (ParameterizedTypeName) paramModelTypeName;
                     if (!paramModelTypeName0.rawType.toString().equals("java.util.List")) {
                         throw new Exception(String.format("%s 函数的placeholder arg必须是java.util.List。", methodElement.getSimpleName()));
                     }
@@ -76,7 +76,7 @@ public class DALMethodModel {
                     } else {
                         placeholderCode = paramModel.getParamName() + ".stream().map(v -> String.format(\"%s\", v.toString())).reduce((v1, v2) -> String.format(\"%s, %s\", v1, v2)).orElse(\"NULL\");\n";
                     }
-                    this.placeholders.put(paramModel.getParamName(),placeholderCode);
+                    this.placeholders.put(paramModel.getParamName(), placeholderCode);
                 } else {
                     throw new Exception(String.format("%s 函数的placeholder arg必须是java.util.List。", methodElement.getSimpleName()));
                 }
@@ -85,41 +85,50 @@ public class DALMethodModel {
                 }
                 continue;
             }
+
             for (int ppos : paramModel.getArg().value()) {
-                this.paramArgNames.add(ppos, paramModel.getParamName());
+                args.add(new QueryArg(ppos, paramModel.getParamName()));
+            }
+
+            this.paramArgNames = new ArrayList<>();
+
+            args.sort(Comparator.comparingInt(QueryArg::getPos));
+            for (QueryArg arg : args) {
+                this.paramArgNames.add(arg.getName());
             }
         }
     }
 
-    private void loadReturnElementClassName(ParameterizedTypeName returnTypeName) throws Exception {
-        TypeName returnParameterTypeName = returnTypeName.typeArguments.get(0);
-        if (returnParameterTypeName instanceof ParameterizedTypeName) {
-            ParameterizedTypeName returnParameterParameterizedTypeName = ((ParameterizedTypeName) returnParameterTypeName);
+    private void loadReturnElementClassName(TypeName returnTypeName) throws Exception {
+        if (returnTypeName instanceof ParameterizedTypeName) {
+            ParameterizedTypeName returnParameterParameterizedTypeName = (ParameterizedTypeName) returnTypeName;
             if (returnParameterParameterizedTypeName.rawType.toString().equals("java.util.Optional")) {
                 this.returnWithOptional = true;
-                returnParameterTypeName = returnParameterParameterizedTypeName.typeArguments.get(0);
+                TypeName returnParameterTypeName = returnParameterParameterizedTypeName.typeArguments.get(0);
                 if (returnParameterTypeName instanceof ParameterizedTypeName) {
-                    this.loadReturnElementClassName((ParameterizedTypeName)returnParameterTypeName);
+                    ParameterizedTypeName layer2 = (ParameterizedTypeName) returnParameterTypeName;
+                    System.out.println(layer2);
+                    if (layer2.rawType.toString().contains("java.util.List")) {
+                        this.singleReturn = false;
+                        this.returnList = true;
+                        this.returnElementClassName = layer2.typeArguments.get(0);
+                    } else if (layer2.rawType.toString().contains("java.util.stream.Stream")) {
+                        this.singleReturn = false;
+                        this.returnStream = true;
+                        this.returnElementClassName = layer2.typeArguments.get(0);
+
+                    } else {
+                        throw new Exception(String.format("%s 函数的返回值的泛型不合法。", methodElement.getSimpleName()));
+                    }
                 } else {
                     this.singleReturn = true;
                     this.returnElementClassName = returnParameterTypeName;
                 }
-            } else if (returnParameterParameterizedTypeName.rawType.toString().equals("java.util.List")) {
-                this.singleReturn = false;
-                this.returnList = true;
-                this.returnElementClassName = returnParameterParameterizedTypeName.typeArguments.get(0);
-            } else if (returnParameterParameterizedTypeName.rawType.toString().equals("java.util.Stream")) {
-                this.singleReturn = false;
-                this.returnStream = true;
-                this.returnElementClassName = returnParameterParameterizedTypeName.typeArguments.get(0);
-            } else {
-                throw new Exception(String.format("%s 函数的返回值的泛型不合法。", methodElement.getSimpleName()));
             }
         } else {
             this.singleReturn = true;
-            this.returnElementClassName = returnParameterTypeName;
+            this.returnElementClassName = returnTypeName;
         }
-
     }
 
     private String name;

@@ -5,16 +5,20 @@ import org.pharosnet.vertx.faas.database.codegen.annotations.Arg;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 public class DALMethodParamModel {
 
-    public DALMethodParamModel(VariableElement parameter) throws Exception {
+    public DALMethodParamModel(Types typeUtils, VariableElement parameter) throws Exception {
         this.arg = parameter.getAnnotation(Arg.class);
-        if (!this.arg.placeholder() && this.arg.value().length == 0) {
-            throw new Exception(String.format("%s 参数的@Arg必须设置value或placeholder", parameter.getSimpleName()));
+        if (this.arg != null) {
+            if (!this.arg.placeholder() && this.arg.value().length == 0) {
+                throw new Exception(String.format("%s 参数的@Arg必须设置value或placeholder", parameter.getSimpleName()));
+            }
         }
         this.paramName = parameter.getSimpleName().toString();
-        this.paramTypeElement = (TypeElement) parameter;
+        this.paramTypeElement = (TypeElement) typeUtils.asElement(parameter.asType());
         this.paramClassName = ClassName.get(this.paramTypeElement);
     }
 

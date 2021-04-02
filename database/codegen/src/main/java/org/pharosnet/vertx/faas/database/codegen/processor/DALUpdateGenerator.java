@@ -12,6 +12,7 @@ import org.pharosnet.vertx.faas.database.codegen.DatabaseType;
 import javax.lang.model.element.Modifier;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DALUpdateGenerator {
@@ -152,13 +153,13 @@ public class DALUpdateGenerator {
                 .addCode("arg.setSlaverMode(false);\n")
                 .addCode("arg.setNeedLastInsertedId(false);\n");
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"update failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"update succeed, affected = {} latency = {}\", queryResult.getAffected(), queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -201,14 +202,17 @@ public class DALUpdateGenerator {
                         ParameterizedTypeName.get(
                                 ClassName.get(Promise.class),
                                 ParameterizedTypeName.get(
-                                        ClassName.get(Stream.class),
-                                        dalModel.getTableClassName()
+                                        ClassName.get(Optional.class),
+                                        ParameterizedTypeName.get(
+                                                ClassName.get(Stream.class),
+                                                dalModel.getTableClassName()
+                                        )
                                 )
                         ),
                         ClassName.get(Promise.class)
                 );
 
-        methodBuild.addCode("$T args = new $T();\n",
+        methodBuild.addCode("$T args = new $T(\n",
                 ClassName.get(JsonArray.class),
                 ClassName.get(JsonArray.class)
         );
@@ -235,7 +239,7 @@ public class DALUpdateGenerator {
             methodBuild.addCode(String.format("\t\targ.add(row.get%s());\n", CamelCase.INSTANCE.format(List.of(versionField))));
         }
         methodBuild.addCode("\t\treturn arg;\n");
-        methodBuild.addCode("\t}).collect(Collectors.toList()));\n");
+        methodBuild.addCode("\t}).collect($T.toList()));\n", ClassName.get(Collectors.class));
         methodBuild.addCode("\t\n");
 
         methodBuild
@@ -246,13 +250,13 @@ public class DALUpdateGenerator {
                 .addCode("arg.setSlaverMode(false);\n")
                 .addCode("arg.setNeedLastInsertedId(false);\n");
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"update batch failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"update batch succeed, affected = {} latency = {}\", queryResult.getAffected(), queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -261,7 +265,7 @@ public class DALUpdateGenerator {
         methodBuild.addCode("\t\tpromise.complete($T.empty());\n", ClassName.get(Optional.class));
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tpromise.complete(rows);\n");
+        methodBuild.addCode("\tpromise.complete($T.ofNullable(rows));\n", ClassName.get(Optional.class));
         methodBuild.addCode("});\n");
         methodBuild.addCode("return promise.future();\n");
 

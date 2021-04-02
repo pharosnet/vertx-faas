@@ -2,7 +2,7 @@ package org.pharosnet.vertx.faas.engine.http.router;
 
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
-import org.pharosnet.vertx.faas.codegen.annotation.EnableOAS;
+import org.pharosnet.vertx.faas.core.annotations.EnableOAS;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

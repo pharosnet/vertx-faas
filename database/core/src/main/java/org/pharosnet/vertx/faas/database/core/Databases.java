@@ -48,7 +48,7 @@ public class Databases {
             this.distributed = true;
             this.mastered = false;
         } else {
-            throw new RuntimeException("postgres config is invalid, kind is invalid, it must be one of master_slaver or groups");
+            throw new RuntimeException("postgres config is invalid, kind is invalid, it must be one of none, master_slaver or groups");
         }
         this.index = new AtomicInteger();
         List<NodeConfig> nodeConfigs = config.getNodes();

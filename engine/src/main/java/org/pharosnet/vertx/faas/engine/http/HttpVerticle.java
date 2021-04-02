@@ -37,7 +37,7 @@ public class HttpVerticle extends AbstractVerticle {
         this.discovery = ServiceDiscoveryProvider.get();
 
         String basePackage = this.config().getJsonObject("_faasOptions").getString("basePackage");
-        this.http = new Http(this.vertx, basePackage, this.config().getJsonObject("http"));
+        this.http = new Http(this.vertx, basePackage, this.config());
 
         this.http.run(this.httpRouter)
                 .onSuccess(httpInfo -> {

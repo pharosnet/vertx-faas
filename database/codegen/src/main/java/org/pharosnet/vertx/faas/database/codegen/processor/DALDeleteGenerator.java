@@ -182,13 +182,13 @@ public class DALDeleteGenerator {
                 .addCode("arg.setSlaverMode(false);\n")
                 .addCode("arg.setNeedLastInsertedId(false);\n");
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"delete failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"delete succeed, affected = {} latency = {}\", queryResult.getAffected(), queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -232,14 +232,18 @@ public class DALDeleteGenerator {
                 ParameterizedTypeName.get(
                         ClassName.get(Promise.class),
                         ParameterizedTypeName.get(
-                                ClassName.get(Stream.class),
-                                dalModel.getTableClassName()
+                                ClassName.get(Optional.class),
+                                ParameterizedTypeName.get(
+                                        ClassName.get(Stream.class),
+                                        dalModel.getTableClassName()
+                                )
+
                         )
                 ),
                 ClassName.get(Promise.class)
         );
 
-        methodBuild.addCode("$T args = new $T();\n",
+        methodBuild.addCode("$T args = new $T(\n",
                 ClassName.get(JsonArray.class),
                 ClassName.get(JsonArray.class)
         );
@@ -283,13 +287,13 @@ public class DALDeleteGenerator {
                 .addCode("arg.setSlaverMode(false);\n")
                 .addCode("arg.setNeedLastInsertedId(false);\n");
 
-        methodBuild.addCode("this.service.query(context, arg, r -> {\n");
+        methodBuild.addCode("this.service().query(context, arg, r -> {\n");
         methodBuild.addCode("\tif (r.failed()) {\n");
         methodBuild.addCode("\t\tlog.error(\"delete batch failed\", r.cause());\n");
         methodBuild.addCode("\t\tpromise.fail(r.cause());\n");
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tQueryResult queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
+        methodBuild.addCode("\t$T queryResult = r.result();\n", ClassName.get("org.pharosnet.vertx.faas.database.api", "QueryResult"));
         methodBuild.addCode("\tif (log.isDebugEnabled()) {\n");
         methodBuild.addCode("\t\tlog.debug(\"delete batch succeed, affected = {} latency = {}\", queryResult.getAffected(), queryResult.getLatency());\n");
         methodBuild.addCode("\t}\n");
@@ -298,7 +302,7 @@ public class DALDeleteGenerator {
         methodBuild.addCode("\t\tpromise.complete($T.empty());\n", ClassName.get(Optional.class));
         methodBuild.addCode("\t\treturn;\n");
         methodBuild.addCode("\t}\n");
-        methodBuild.addCode("\tpromise.complete(rows);\n");
+        methodBuild.addCode("\tpromise.complete($T.ofNullable(rows));\n", ClassName.get(Optional.class));
         methodBuild.addCode("});\n");
         methodBuild.addCode("return promise.future();\n");
 

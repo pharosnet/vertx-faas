@@ -1,4 +1,4 @@
-package org.pharosnet.vertx.faas.codegen.annotation.oas;
+package org.pharosnet.vertx.faas.core.annotations.oas;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,10 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface Server {
+public @interface License {
 
     String name();
     String url();
-    ServerVariable[] variables() default {};
 
 }

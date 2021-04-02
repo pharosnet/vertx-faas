@@ -6,7 +6,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.pharosnet.vertx.faas.codegen.annotation.FnDeployment;
 import org.pharosnet.vertx.faas.codegen.annotation.FnModule;
 
 import javax.annotation.processing.Filer;
@@ -65,7 +64,7 @@ public class DeploymentGenerator {
 
         // class
         TypeSpec typeBuilder = TypeSpec.classBuilder(fnDeploymentClassName)
-                .addAnnotation(FnDeployment.class)
+                .addAnnotation(ClassName.get("org.pharosnet.vertx.faas.core.annotations", "FnDeployment"))
                 .addModifiers(Modifier.PUBLIC)
                 .superclass(ClassName.get("org.pharosnet.vertx.faas.core.components", "ComponentDeployment"))
                 .addMethod(constructor.build())

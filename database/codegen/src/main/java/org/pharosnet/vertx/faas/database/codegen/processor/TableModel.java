@@ -78,6 +78,7 @@ public class TableModel {
             ColumnModel columnModel = new ColumnModel();
             columnModel.setFieldName(fieldName);
             columnModel.setClassName(fieldClassName);
+            columnModel.setElement(fieldElement);
             columnModel.setColumn(column);
             columnModel.setKind(columnKind);
             columnModel.setNeedLastInsertedId(needLastInsertedId);

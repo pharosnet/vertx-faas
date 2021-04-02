@@ -9,6 +9,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.util.Map;
@@ -18,6 +19,7 @@ public class DALGenerator {
     public DALGenerator(ProcessingEnvironment processingEnv, Map<String, TableModel> tableModelMap, DatabaseType databaseType) {
         this.filer = processingEnv.getFiler();
         this.messager = processingEnv.getMessager();
+        this.elementUtils = processingEnv.getElementUtils();
         this.typeUtils = processingEnv.getTypeUtils();
         this.tableModelMap = tableModelMap;
         this.databaseType = databaseType;
@@ -26,11 +28,12 @@ public class DALGenerator {
     private final Map<String, TableModel> tableModelMap;
     private final Messager messager;
     private final Filer filer;
+    private final Elements elementUtils;
     private final Types typeUtils;
     private final DatabaseType databaseType;
 
     public void generate(TypeElement element) throws Exception {
-        DALModel dalModel = new DALModel(this.typeUtils, tableModelMap, element);
+        DALModel dalModel = new DALModel(this.typeUtils, this.elementUtils, tableModelMap, element);
         this.generateDAL(dalModel);
     }
 
@@ -41,39 +44,21 @@ public class DALGenerator {
         // class
         TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(dalModel.getImplClassName())
                 .addSuperinterface(
-                        ParameterizedTypeName.get(
-                                ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractDAL"),
-                                dalModel.getTableClassName(),
-                                dalModel.getIdClassName()
-                        )
+                        dalModel.getClassName()
                 )
                 .addModifiers(Modifier.PUBLIC);
 
         if (!dalModel.isView()) {
             typeBuilder
-                    .addSuperinterface(
+                    .superclass(
                             ParameterizedTypeName.get(
-                                    ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractDAL"),
+                                    ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractDALImpl"),
                                     dalModel.getTableClassName(),
                                     dalModel.getIdClassName()
                             )
-                    )
-                    .superclass(
-                    ParameterizedTypeName.get(
-                            ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractDALImpl"),
-                            dalModel.getTableClassName(),
-                            dalModel.getIdClassName()
-                    )
-            );
+                    );
         } else {
             typeBuilder
-                    .addSuperinterface(
-                            ParameterizedTypeName.get(
-                                    ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractVAL"),
-                                    dalModel.getTableClassName(),
-                                    dalModel.getIdClassName()
-                            )
-                    )
                     .superclass(
                             ParameterizedTypeName.get(
                                     ClassName.get("org.pharosnet.vertx.faas.database.api", "AbstractVALImpl"),
@@ -97,8 +82,9 @@ public class DALGenerator {
                 .addParameter(Vertx.class, "vertx")
                 .addStatement("super(vertx)");
         typeBuilder.addMethod(constructor.build());
-
-        this.generateCRUD(typeBuilder, dalModel);
+        if (!dalModel.isView()) {
+            this.generateCRUD(typeBuilder, dalModel);
+        }
 
         for (DALMethodModel methodModel : dalModel.getMethodModels()) {
             this.generateMethod(typeBuilder, methodModel);
@@ -118,12 +104,11 @@ public class DALGenerator {
     }
 
     private void generateCRUD(TypeSpec.Builder typeBuilder, DALModel dalModel) {
-        if (!dalModel.isView()) {
-            new DALGetGenerator(databaseType).generate(dalModel, typeBuilder);
-            new DALInsertGenerator(databaseType).generate(dalModel, typeBuilder);
-            new DALUpdateGenerator(databaseType).generate(dalModel, typeBuilder);
-            new DALDeleteGenerator(databaseType).generate(dalModel, typeBuilder);
-        }
+        new DALGetGenerator(databaseType).generate(dalModel, typeBuilder);
+        new DALInsertGenerator(databaseType).generate(dalModel, typeBuilder);
+        new DALUpdateGenerator(databaseType).generate(dalModel, typeBuilder);
+        new DALDeleteGenerator(databaseType).generate(dalModel, typeBuilder);
+        new DALDeleteForceGenerator(databaseType).generate(dalModel, typeBuilder);
     }
 
     private void generateMethod(TypeSpec.Builder typeBuilder, DALMethodModel methodModel) {

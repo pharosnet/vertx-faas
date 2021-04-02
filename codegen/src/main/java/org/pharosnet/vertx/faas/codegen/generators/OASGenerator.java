@@ -12,9 +12,9 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.servers.ServerVariables;
-import org.pharosnet.vertx.faas.codegen.annotation.EnableOAS;
-import org.pharosnet.vertx.faas.codegen.annotation.oas.ServerVariable;
-import org.pharosnet.vertx.faas.codegen.annotation.oas.Tag;
+import org.pharosnet.vertx.faas.core.annotations.EnableOAS;
+import org.pharosnet.vertx.faas.core.annotations.oas.ServerVariable;
+import org.pharosnet.vertx.faas.core.annotations.oas.Tag;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -109,7 +109,7 @@ public class OASGenerator {
         // servers
         List<Server> servers = new ArrayList<>();
 
-        for (org.pharosnet.vertx.faas.codegen.annotation.oas.Server server : enableOAS.servers()) {
+        for (org.pharosnet.vertx.faas.core.annotations.oas.Server server : enableOAS.servers()) {
             ServerVariables variables = new ServerVariables();
             for (ServerVariable variable : server.variables()) {
                 variables.addServerVariable(variable.name(),

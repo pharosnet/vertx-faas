@@ -2,7 +2,7 @@ package org.pharosnet.vertx.faas.engine.http.router;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import org.pharosnet.vertx.faas.codegen.annotation.FnRouter;
+import org.pharosnet.vertx.faas.core.annotations.FnRouter;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

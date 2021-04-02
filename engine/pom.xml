@@ -105,6 +105,19 @@
         </dependency>
         <!--   <<< netty  -->
 
+        <!--   validator >>> -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>7.0.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+        <!--   <<< validator  -->
+
     </dependencies>
 
     <build>

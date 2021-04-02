@@ -12,7 +12,7 @@ import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import org.pharosnet.vertx.faas.codegen.annotation.FnDeployment;
+import org.pharosnet.vertx.faas.core.annotations.FnDeployment;
 import org.pharosnet.vertx.faas.core.commons.ClassUtils;
 import org.pharosnet.vertx.faas.core.commons.Host;
 import org.pharosnet.vertx.faas.core.components.ComponentDeployment;
